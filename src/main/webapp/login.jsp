@@ -39,7 +39,7 @@
         } else {
             // Verificación normal contra la BD
             try (Connection conn = getConn()) {
-                String sql = "SELECT u.id_usuario, u.password_hash, u.estado, p.nombres, p.apellidos, r.nombre AS rol " +
+                String sql = "SELECT u.id_usuario, u.password_hash, u.estado, p.nombres, p.apellidos, p.foto_url, r.nombre AS rol " +
                              "FROM usuario u " +
                              "JOIN perfil p ON p.id_usuario = u.id_usuario " +
                              "JOIN usuario_rol ur ON ur.id_usuario = u.id_usuario " +
@@ -56,6 +56,7 @@
                         idUsuario     = rs.getInt("id_usuario");
                         rolDetectado  = rs.getString("rol");
                         nombreDetectado = rs.getString("nombres") + " " + rs.getString("apellidos");
+                        if (rs.getString("foto_url") != null) session.setAttribute("fotoUsuario", rs.getString("foto_url"));
                         // Actualizar ultimo_acceso
                         PreparedStatement upd = conn.prepareStatement(
                             "UPDATE usuario SET ultimo_acceso = NOW() WHERE id_usuario = ?");

@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"
-         import="java.sql.*" %>
+         import="java.sql.*,javax.servlet.http.Part,java.io.*,java.util.UUID" %>
 <%@ include file="/components/conexion.jsp" %>
 <%
     String rolI = (String) session.getAttribute("rolActivo");
@@ -47,6 +47,10 @@
                 area        = rp.getString("area_m2") != null ? rp.getString("area_m2") : "";
                 parq        = String.valueOf(rp.getBoolean("parqueadero"));
             }
+            PreparedStatement psImgLoad = conn.prepareStatement("SELECT url FROM imagen_propiedad WHERE id_propiedad=? ORDER BY orden ASC LIMIT 1");
+            psImgLoad.setInt(1, Integer.parseInt(editId));
+            ResultSet rImgLoad = psImgLoad.executeQuery();
+            if (rImgLoad.next()) imgUrl = rImgLoad.getString("url");
         }
     } catch (Exception ex) { ex.printStackTrace(); }
 
@@ -68,6 +72,32 @@
         imgUrl      = request.getParameter("imagenUrl");
         editId      = request.getParameter("editId");
 
+        // Procesar subida de archivo local desde la PC
+        try {
+            Part filePart = request.getPart("imagenArchivo");
+            if (filePart != null && filePart.getSize() > 0) {
+                String subName = filePart.getSubmittedFileName();
+                if (subName != null && !subName.trim().isEmpty()) {
+                    String ext = "jpg";
+                    int dot = subName.lastIndexOf(".");
+                    if (dot > 0) ext = subName.substring(dot + 1).toLowerCase();
+                    String fileName = "prop_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + ext;
+                    String uploadPath = application.getRealPath("/uploads/propiedades");
+                    File uploadDir = new File(uploadPath);
+                    if (!uploadDir.exists()) uploadDir.mkdirs();
+                    File dest = new File(uploadDir, fileName);
+                    try (InputStream in = filePart.getInputStream(); OutputStream outStream = new FileOutputStream(dest)) {
+                        byte[] buf = new byte[8192];
+                        int len;
+                        while ((len = in.read(buf)) > 0) outStream.write(buf, 0, len);
+                    }
+                    imgUrl = ctx + "/uploads/propiedades/" + fileName;
+                }
+            }
+        } catch (Exception exPart) {
+            System.err.println("Error procesando imagen de propiedad: " + exPart.getMessage());
+        }
+
         try (Connection conn = getConn()) {
             if (editId != null && !editId.isEmpty()) {
                 // Actualizar
@@ -86,6 +116,24 @@
                 ps.setBoolean(12, "true".equals(parq));
                 ps.setInt(13, Integer.parseInt(editId));
                 ps.executeUpdate();
+
+                // Actualizar imagen si se proporcionó una nueva
+                if (imgUrl != null && !imgUrl.isEmpty()) {
+                    PreparedStatement psImgCheck = conn.prepareStatement("SELECT id_imagen FROM imagen_propiedad WHERE id_propiedad=? ORDER BY orden ASC LIMIT 1");
+                    psImgCheck.setInt(1, Integer.parseInt(editId));
+                    ResultSet rsImg = psImgCheck.executeQuery();
+                    if (rsImg.next()) {
+                        PreparedStatement psImgUp = conn.prepareStatement("UPDATE imagen_propiedad SET url=? WHERE id_imagen=?");
+                        psImgUp.setString(1, imgUrl);
+                        psImgUp.setInt(2, rsImg.getInt("id_imagen"));
+                        psImgUp.executeUpdate();
+                    } else {
+                        PreparedStatement psImgIn = conn.prepareStatement("INSERT INTO imagen_propiedad (id_propiedad, url, orden) VALUES (?,?,1)");
+                        psImgIn.setInt(1, Integer.parseInt(editId));
+                        psImgIn.setString(2, imgUrl);
+                        psImgIn.executeUpdate();
+                    }
+                }
                 msgForm = "Propiedad actualizada exitosamente.";
             } else {
                 // Insertar
@@ -106,19 +154,21 @@
                 ps.executeUpdate();
                 ResultSet gk = ps.getGeneratedKeys();
                 int nuevoId = gk.next() ? gk.getInt(1) : -1;
-                // Guardar imagen si la puso
+                // Guardar imagen si la puso o subió
                 if (imgUrl != null && !imgUrl.isEmpty() && nuevoId > 0) {
-                    conn.prepareStatement("INSERT INTO imagen_propiedad (id_propiedad, url, orden) VALUES (" + nuevoId + ",'" + imgUrl + "',1)").executeUpdate();
+                    PreparedStatement psImgIn = conn.prepareStatement("INSERT INTO imagen_propiedad (id_propiedad, url, orden) VALUES (?,?,1)");
+                    psImgIn.setInt(1, nuevoId);
+                    psImgIn.setString(2, imgUrl);
+                    psImgIn.executeUpdate();
                 }
                 msgForm = "Propiedad publicada exitosamente.";
                 titulo=""; descripcion=""; precio=""; operacion="Venta"; direccion="";
-                idCiudad=""; idTipo=""; idInmob=""; hab=""; ban=""; area=""; parq="false";
+                idCiudad=""; idTipo=""; idInmob=""; hab=""; ban=""; area=""; parq="false"; imgUrl="";
             }
         } catch (Exception ex) { errForm = "Error al guardar: " + ex.getMessage(); ex.printStackTrace(); }
     }
 
     boolean esEdicion = editId != null && !editId.isEmpty();
-    String sidebarInclude = "admin".equals(rolI) ? "/components/sidebar_admin.jsp" : "/components/sidebar_inmobiliaria.jsp";
 %>
 <%@ include file="/components/header.jsp" %>
 <div class="dashboard-wrapper">
@@ -129,56 +179,56 @@
     <% } %>
     <div class="dashboard-content">
         <h2 class="fw-bold mb-1"><%= esEdicion ? "Editar Propiedad" : "Publicar Nueva Propiedad" %></h2>
-        <p class="text-muted mb-4"><%= esEdicion ? "Actualiza los datos del inmueble" : "Completa los datos para publicar un nuevo inmueble en el catálogo" %></p>
+        <p class="text-muted mb-4"><%= esEdicion ? "Actualiza los datos del inmueble y su fotografía" : "Completa los datos y sube las fotos para publicar un nuevo inmueble en el catálogo" %></p>
 
         <% if (msgForm != null) { %><div class="alert-success-vsta mb-4"><i class="bi bi-check-circle me-1"></i> <%= msgForm %></div><% } %>
         <% if (errForm != null) { %><div class="alert-danger-vsta mb-4"><i class="bi bi-x-circle me-1"></i> <%= errForm %></div><% } %>
 
-        <div style="background:var(--bg-surface);border-radius:var(--radius-lg);padding:32px;border:1px solid var(--border-subtle);max-width:800px;">
-            <form action="<%= ctx %>/<%= "admin".equals(rolI) ? "admin" : "inmobiliaria" %>/propiedad_form.jsp" method="POST">
+        <div style="background:var(--bg-surface);border-radius:var(--radius-lg);padding:32px;border:1px solid var(--border-subtle);max-width:850px;">
+            <form action="<%= ctx %>/<%= "admin".equals(rolI) ? "admin" : "inmobiliaria" %>/propiedad_form.jsp" method="POST" enctype="multipart/form-data">
                 <% if (esEdicion) { %><input type="hidden" name="editId" value="<%= editId %>"><% } %>
                 <div class="row g-3">
                     <div class="col-12">
-                        <label class="form-label-vesta">Título del Inmueble *</label>
-                        <input type="text" name="titulo" class="form-control-vesta" value="<%= titulo %>" placeholder="Ej: Apartamento de lujo en Cabecera" required>
+                        <label class="form-label-vesta">Título de la Publicación *</label>
+                        <input type="text" name="titulo" class="form-control-vesta" value="<%= titulo %>" required placeholder="Ej: Hermoso Apartamento con Vista Panorámica">
                     </div>
                     <div class="col-12">
-                        <label class="form-label-vesta">Descripción</label>
-                        <textarea name="descripcion" class="form-control-vesta" rows="4" style="resize:vertical;" placeholder="Describe el inmueble..."><%= descripcion %></textarea>
+                        <label class="form-label-vesta">Descripción Detallada</label>
+                        <textarea name="descripcion" class="form-control-vesta" rows="3" placeholder="Describe los espacios, acabados y amenidades..."><%= descripcion %></textarea>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label-vesta">Precio (COP) *</label>
-                        <input type="number" name="precio" class="form-control-vesta" value="<%= precio %>" placeholder="250000000" required>
+                    <div class="col-md-6">
+                        <label class="form-label-vesta">Precio ($ COP) *</label>
+                        <input type="number" name="precio" class="form-control-vesta" value="<%= precio %>" required placeholder="350000000" min="0">
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label-vesta">Operación *</label>
+                    <div class="col-md-6">
+                        <label class="form-label-vesta">Tipo de Operación *</label>
                         <select name="operacion" class="form-select-vesta" required>
-                            <option value="Venta" <%= "Venta".equals(operacion) ? "selected" : "" %>>Venta</option>
-                            <option value="Arriendo" <%= "Arriendo".equals(operacion) ? "selected" : "" %>>Arriendo</option>
+                            <option value="Venta" <%= "Venta".equalsIgnoreCase(operacion) ? "selected" : "" %>>Venta</option>
+                            <option value="Arriendo" <%= "Arriendo".equalsIgnoreCase(operacion) ? "selected" : "" %>>Arriendo</option>
                         </select>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label-vesta">Ciudad *</label>
                         <select name="idCiudad" class="form-select-vesta" required>
-                            <option value="">Selecciona</option>
+                            <option value="">Selecciona Ciudad</option>
                             <% for (String[] c : ciudades) { %>
                             <option value="<%= c[0] %>" <%= c[0].equals(idCiudad) ? "selected" : "" %>><%= c[1] %></option>
                             <% } %>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label-vesta">Tipo *</label>
+                        <label class="form-label-vesta">Tipo de Inmueble *</label>
                         <select name="idTipo" class="form-select-vesta" required>
-                            <option value="">Selecciona</option>
+                            <option value="">Selecciona Tipo</option>
                             <% for (String[] t : tipos) { %>
                             <option value="<%= t[0] %>" <%= t[0].equals(idTipo) ? "selected" : "" %>><%= t[1] %></option>
                             <% } %>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label-vesta">Inmobiliaria</label>
+                        <label class="form-label-vesta">Inmobiliaria Asignada</label>
                         <select name="idInmobiliaria" class="form-select-vesta">
-                            <option value="">Sin inmobiliaria</option>
+                            <option value="">Sin inmobiliaria asignada</option>
                             <% for (String[] i : inmobs) { %>
                             <option value="<%= i[0] %>" <%= i[0].equals(idInmob) ? "selected" : "" %>><%= i[1] %></option>
                             <% } %>
@@ -196,27 +246,40 @@
                         <label class="form-label-vesta">Baños</label>
                         <input type="number" name="banos" class="form-control-vesta" value="<%= ban %>" min="0">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label-vesta">Área (m²)</label>
                         <input type="number" name="area" class="form-control-vesta" value="<%= area %>" step="0.5">
                     </div>
-                    <div class="col-md-3 d-flex align-items-end">
-                        <div class="form-check" style="padding:14px 0;">
+                    <div class="col-12">
+                        <div class="form-check" style="padding:10px 0;">
                             <input type="checkbox" name="parqueadero" id="parqueadero" value="true" <%= "true".equals(parq) ? "checked" : "" %>
                                    style="width:20px;height:20px;accent-color:var(--color-accent);vertical-align:middle;">
-                            <label for="parqueadero" class="ms-2 fw-600" style="font-size:0.9rem;">Parqueadero</label>
+                            <label for="parqueadero" class="ms-2 fw-600" style="font-size:0.95rem;">Cuenta con Parqueadero / Cochera</label>
                         </div>
                     </div>
-                    <% if (!esEdicion) { %>
-                    <div class="col-12">
-                        <label class="form-label-vesta">URL de Imagen Principal</label>
-                        <input type="url" name="imagenUrl" class="form-control-vesta" placeholder="https://ejemplo.com/imagen.jpg">
-                        <small class="text-muted">Pega la URL de una imagen para el inmueble</small>
+
+                    <!-- SECCIÓN DE FOTO / IMAGEN -->
+                    <div class="col-12"><hr style="border-color:var(--border-subtle);margin:10px 0;"></div>
+                    <div class="col-md-6">
+                        <label class="form-label-vesta"><i class="bi bi-upload me-1 text-primary"></i> Subir Foto desde tu PC</label>
+                        <input type="file" name="imagenArchivo" accept="image/png, image/jpeg, image/webp" class="form-control-vesta">
+                        <small class="text-muted">Selecciona una imagen local de tu ordenador (JPG, PNG, WEBP)</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label-vesta"><i class="bi bi-link-45deg me-1"></i> O Ingresa URL de Imagen</label>
+                        <input type="url" name="imagenUrl" class="form-control-vesta" value="<%= imgUrl != null ? imgUrl : "" %>" placeholder="https://ejemplo.com/inmueble.jpg">
+                        <small class="text-muted">Si subes un archivo local, este tendrá prioridad</small>
+                    </div>
+                    <% if (imgUrl != null && !imgUrl.isEmpty()) { %>
+                    <div class="col-12 mt-2">
+                        <span class="text-muted small d-block mb-1">Fotografía actual del inmueble:</span>
+                        <img src="<%= imgUrl %>" alt="Vista previa" style="height:120px;border-radius:var(--radius-md);object-fit:cover;border:1px solid var(--border-subtle);">
                     </div>
                     <% } %>
-                    <div class="col-12 mt-3">
+
+                    <div class="col-12 mt-4">
                         <button type="submit" class="btn btn-vesta-accent me-2">
-                            <i class="bi bi-save me-1"></i> <%= esEdicion ? "Actualizar" : "Publicar Propiedad" %>
+                            <i class="bi bi-save me-1"></i> <%= esEdicion ? "Guardar Cambios" : "Publicar Propiedad" %>
                         </button>
                         <a href="<%= ctx %>/<%= "admin".equals(rolI) ? "admin" : "inmobiliaria" %>/propiedades.jsp" class="btn btn-vesta-outline">Cancelar</a>
                     </div>
