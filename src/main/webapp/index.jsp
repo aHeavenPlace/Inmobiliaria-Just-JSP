@@ -28,7 +28,6 @@
         while (rsTipo.next()) tipos.add(new String[]{ rsTipo.getString("id_tipo"), rsTipo.getString("nombre") });
 
         // Stats globales
-        totalPropiedades   = ((Number) conn.createStatement().executeQuery("SELECT COUNT(*) FROM propiedad WHERE estado='activo'").next() ? 0 : 0);
         ResultSet rsStats  = conn.createStatement().executeQuery("SELECT COUNT(*) AS c FROM propiedad WHERE estado='activo'");
         if (rsStats.next()) totalPropiedades = rsStats.getInt("c");
         ResultSet rsC2     = conn.createStatement().executeQuery("SELECT COUNT(*) AS c FROM ciudad");
