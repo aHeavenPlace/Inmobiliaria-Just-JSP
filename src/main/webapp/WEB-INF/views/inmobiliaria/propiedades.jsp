@@ -57,7 +57,7 @@
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center gap-3">
-                                    <img src="${p.imagenPrincipal}" alt="${p.titulo}" class="rounded-3" width="56" height="56" style="object-fit: cover;">
+                                    <img src="${p.getImagenPrincipalUrl(pageContext.request.contextPath)}" alt="${p.titulo}" class="rounded-3 shadow-xs" width="56" height="56" style="object-fit: cover;">
                                     <div>
                                         <a href="${pageContext.request.contextPath}/propiedad?id=${p.idPropiedad}" class="fw-bold text-primary text-decoration-none">
                                             ${p.titulo}

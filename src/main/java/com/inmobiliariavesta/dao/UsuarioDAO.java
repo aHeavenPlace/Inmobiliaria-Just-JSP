@@ -200,7 +200,7 @@ public class UsuarioDAO {
                     psP.setString(4, perfil.getDocumento() != null ? perfil.getDocumento() : "");
                     psP.setString(5, perfil.getTelefono() != null ? perfil.getTelefono() : "");
                     psP.setString(6, perfil.getDireccion() != null ? perfil.getDireccion() : "");
-                    psP.setString(7, perfil.getFotoUrl() != null ? perfil.getFotoUrl() : "https://i.pravatar.cc/150?u=" + idUsuarioGenerado);
+                    psP.setString(7, (perfil.getFotoUrl() != null && !perfil.getFotoUrl().isBlank() && !perfil.getFotoUrl().contains("pravatar")) ? perfil.getFotoUrl() : null);
                     psP.executeUpdate();
                 }
 
@@ -287,6 +287,47 @@ public class UsuarioDAO {
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("[UsuarioDAO] Error al remover rol: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Sincroniza atómicamente los roles de un usuario en la tabla intermedia usuario_rol.
+     */
+    public boolean sincronizarRoles(int idUsuario, List<Integer> idRoles) {
+        if (idRoles == null || idRoles.isEmpty()) {
+            return false; // Un usuario no puede quedarse sin ningún rol
+        }
+        String sqlDelete = "DELETE FROM usuario_rol WHERE id_usuario = ?";
+        String sqlInsert = "INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)";
+
+        try (Connection conn = DBConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement psDel = conn.prepareStatement(sqlDelete)) {
+                    psDel.setInt(1, idUsuario);
+                    psDel.executeUpdate();
+                }
+
+                try (PreparedStatement psIns = conn.prepareStatement(sqlInsert)) {
+                    for (Integer idRol : idRoles) {
+                        psIns.setInt(1, idUsuario);
+                        psIns.setInt(2, idRol);
+                        psIns.addBatch();
+                    }
+                    psIns.executeBatch();
+                }
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            System.err.println("[UsuarioDAO] Error al sincronizar roles: " + e.getMessage());
             return false;
         }
     }

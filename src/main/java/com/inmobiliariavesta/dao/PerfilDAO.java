@@ -17,6 +17,10 @@ public class PerfilDAO {
             ps.setInt(1, idUsuario);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
+                    String fotoUrl = rs.getString("foto_url");
+                    if (fotoUrl != null && fotoUrl.toLowerCase().contains("pravatar")) {
+                        fotoUrl = null;
+                    }
                     return new Perfil(
                         rs.getInt("id_perfil"),
                         rs.getInt("id_usuario"),
@@ -25,7 +29,7 @@ public class PerfilDAO {
                         rs.getString("documento"),
                         rs.getString("telefono"),
                         rs.getString("direccion"),
-                        rs.getString("foto_url")
+                        fotoUrl
                     );
                 }
             }
@@ -33,6 +37,16 @@ public class PerfilDAO {
             System.err.println("[PerfilDAO] Error al obtener perfil por usuario: " + e.getMessage());
         }
         return null;
+    }
+
+    public boolean guardarOActualizar(Perfil p) {
+        if (p == null) return false;
+        Perfil existente = obtenerPorIdUsuario(p.getIdUsuario());
+        if (existente != null) {
+            return actualizar(p);
+        } else {
+            return insertar(p);
+        }
     }
 
     public boolean actualizar(Perfil p) {

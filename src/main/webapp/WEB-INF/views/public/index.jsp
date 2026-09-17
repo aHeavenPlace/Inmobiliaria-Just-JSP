@@ -82,7 +82,7 @@
                 <div class="col-lg-4 col-md-6">
                     <div class="property-card">
                         <div class="property-thumb-wrap">
-                            <img src="${p.imagenPrincipal}" alt="${p.titulo}" class="property-thumb" loading="lazy">
+                            <img src="${p.getImagenPrincipalUrl(pageContext.request.contextPath)}" alt="${p.titulo}" class="property-thumb" loading="lazy">
                             <span class="badge-operation">${p.tipoOperacion}</span>
                             <span class="badge-type">${p.tipoNombre}</span>
                             <button class="btn-favorite-heart ${p.esFavorito ? 'is-favorite' : ''}" 
@@ -206,7 +206,10 @@
                         "El proceso de arrendar mi apartamento fue impecable. Pude radicar mis documentos en línea y en 48 horas ya tenía la aprobación."
                     </p>
                     <div class="d-flex align-items-center gap-3 pt-3" style="border-top: 1px solid var(--border-subtle);">
-                        <img src="#" alt="Juan Pérez" class="rounded-circle" width="44" height="44" style="object-fit: cover; border: 2px solid var(--color-accent-light);">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold" 
+                             style="width: 44px; height: 44px; background: var(--color-accent-light); color: var(--color-accent); font-size: 1rem; border: 2px solid var(--border-subtle); flex-shrink: 0;">
+                            JP
+                        </div>
                         <div>
                             <h6 class="fw-bold mb-0" style="color: var(--color-primary);">Juan Pérez</h6>
                             <small style="color: var(--text-muted);">Comprador en Bucaramanga</small>
@@ -224,7 +227,10 @@
                         "Excelente plataforma. La galería fotográfica es fiel a la realidad y el agente respondió todas nuestras inquietudes."
                     </p>
                     <div class="d-flex align-items-center gap-3 pt-3" style="border-top: 1px solid var(--border-subtle);">
-                        <img src="#" alt="Ana López" class="rounded-circle" width="44" height="44" style="object-fit: cover; border: 2px solid var(--color-accent-light);">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold" 
+                             style="width: 44px; height: 44px; background: var(--color-gold-light); color: var(--color-gold); font-size: 1rem; border: 2px solid var(--border-subtle); flex-shrink: 0;">
+                            AL
+                        </div>
                         <div>
                             <h6 class="fw-bold mb-0" style="color: var(--color-primary);">Ana López</h6>
                             <small style="color: var(--text-muted);">Inversionista en Floridablanca</small>
@@ -242,7 +248,10 @@
                         "Como inmobiliaria aliada, la gestión de inmuebles y citas ha multiplicado la productividad de nuestro equipo."
                     </p>
                     <div class="d-flex align-items-center gap-3 pt-3" style="border-top: 1px solid var(--border-subtle);">
-                        <img src="#" alt="Carlos Ramírez" class="rounded-circle" width="44" height="44" style="object-fit: cover; border: 2px solid var(--color-accent-light);">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold" 
+                             style="width: 44px; height: 44px; background: var(--status-info-bg); color: var(--status-info); font-size: 1rem; border: 2px solid var(--border-subtle); flex-shrink: 0;">
+                            CR
+                        </div>
                         <div>
                             <h6 class="fw-bold mb-0" style="color: var(--color-primary);">Carlos Ramírez</h6>
                             <small style="color: var(--text-muted);">Agente Inmobiliario</small>

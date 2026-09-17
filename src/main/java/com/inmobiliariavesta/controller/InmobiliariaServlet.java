@@ -7,11 +7,9 @@ import com.inmobiliariavesta.dao.CiudadDAO;
 import com.inmobiliariavesta.dao.InmobiliariaDAO;
 import com.inmobiliariavesta.dao.PropiedadDAO;
 import com.inmobiliariavesta.dao.ReportesDAO;
-import com.inmobiliariavesta.dao.SolicitudDAO;
 import com.inmobiliariavesta.dao.TipoPropiedadDAO;
 import com.inmobiliariavesta.model.Cita;
 import com.inmobiliariavesta.model.Propiedad;
-import com.inmobiliariavesta.model.Solicitud;
 import com.inmobiliariavesta.model.Usuario;
 import com.inmobiliariavesta.util.FileUploadUtil;
 import jakarta.servlet.ServletException;
@@ -38,10 +36,9 @@ import java.util.Map;
     "/inmobiliaria/propiedad-nueva",
     "/inmobiliaria/propiedad-editar",
     "/inmobiliaria/propiedad-eliminar",
+    "/inmobiliaria/propiedad-eliminar-imagen",
     "/inmobiliaria/citas",
     "/inmobiliaria/cita-estado",
-    "/inmobiliaria/solicitudes",
-    "/inmobiliaria/solicitud-estado",
     "/inmobiliaria/reportes"
 })
 @MultipartConfig(
@@ -53,7 +50,6 @@ public class InmobiliariaServlet extends HttpServlet {
 
     private PropiedadDAO propiedadDAO = new PropiedadDAO();
     private CitaDAO citaDAO = new CitaDAO();
-    private SolicitudDAO solicitudDAO = new SolicitudDAO();
     private CiudadDAO ciudadDAO = new CiudadDAO();
     private TipoPropiedadDAO tipoDAO = new TipoPropiedadDAO();
     private CaracteristicaDAO caracteristicaDAO = new CaracteristicaDAO();
@@ -100,11 +96,6 @@ public class InmobiliariaServlet extends HttpServlet {
                 request.getRequestDispatcher("/WEB-INF/views/inmobiliaria/citas.jsp").forward(request, response);
                 break;
 
-            case "/inmobiliaria/solicitudes":
-                request.setAttribute("solicitudes", solicitudDAO.listarPorInmobiliaria(idInmobiliaria));
-                request.getRequestDispatcher("/WEB-INF/views/inmobiliaria/solicitudes.jsp").forward(request, response);
-                break;
-
             case "/inmobiliaria/reportes":
                 request.setAttribute("metricas", reportesDAO.obtenerMetricasDashboard(idInmobiliaria, null));
                 request.setAttribute("statsCiudades", reportesDAO.obtenerEstadisticasCiudades(1));
@@ -141,12 +132,12 @@ public class InmobiliariaServlet extends HttpServlet {
                 procesarEliminarPropiedad(request, response, usuario);
                 break;
 
-            case "/inmobiliaria/cita-estado":
-                procesarCambiarEstadoCita(request, response);
+            case "/inmobiliaria/propiedad-eliminar-imagen":
+                procesarEliminarImagenPropiedad(request, response, usuario);
                 break;
 
-            case "/inmobiliaria/solicitud-estado":
-                procesarCambiarEstadoSolicitud(request, response);
+            case "/inmobiliaria/cita-estado":
+                procesarCambiarEstadoCita(request, response);
                 break;
 
             default:
@@ -159,12 +150,10 @@ public class InmobiliariaServlet extends HttpServlet {
             throws ServletException, IOException {
         Map<String, Object> metricas = reportesDAO.obtenerMetricasDashboard(idInmobiliaria, null);
         List<Cita> citasRecientes = citaDAO.listarPorInmobiliariaConDetalle(idInmobiliaria);
-        List<Solicitud> solicitudesRecientes = solicitudDAO.listarPorInmobiliaria(idInmobiliaria);
         List<Propiedad> misPropiedades = propiedadDAO.listarPorInmobiliaria(idInmobiliaria);
 
         request.setAttribute("metricas", metricas);
         request.setAttribute("citas", citasRecientes);
-        request.setAttribute("solicitudes", solicitudesRecientes);
         request.setAttribute("propiedades", misPropiedades);
 
         request.getRequestDispatcher("/WEB-INF/views/inmobiliaria/dashboard.jsp").forward(request, response);
@@ -220,10 +209,10 @@ public class InmobiliariaServlet extends HttpServlet {
             }
             
             if (!imageParts.isEmpty()) {
-                String uploadPath = getServletContext().getRealPath("") + "/uploads/propiedades";
+                String uploadPath = getServletContext().getRealPath("/uploads/propiedades");
                 for (Part part : imageParts) {
                     if (part.getSize() > 0) {
-                        String fileName = FileUploadUtil.saveImage(part, uploadPath);
+                        String fileName = FileUploadUtil.saveImageDual(part, "propiedades", uploadPath);
                         if (fileName != null) {
                             urls.add("/uploads/propiedades/" + fileName);
                         }
@@ -252,9 +241,9 @@ public class InmobiliariaServlet extends HttpServlet {
 
             response.sendRedirect(request.getContextPath() + "/inmobiliaria/propiedades?msg=propiedad_creada");
         } catch (IllegalArgumentException e) {
-            response.sendRedirect(request.getContextPath() + "/inmobiliaria/propiedad-nueva?error=" + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/inmobiliaria/propiedad-nueva?error=" + java.net.URLEncoder.encode(e.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
         } catch (Exception e) {
-            response.sendRedirect(request.getContextPath() + "/inmobiliaria/propiedad-nueva?error=Error al crear la propiedad: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/inmobiliaria/propiedad-nueva?error=" + java.net.URLEncoder.encode("Error al crear la propiedad: " + e.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
         }
     }
 
@@ -284,12 +273,59 @@ public class InmobiliariaServlet extends HttpServlet {
                 for (String c : caracs) idCaracs.add(Integer.parseInt(c));
             }
 
+            // Manejar nuevas fotos subidas en edición
+            List<String> nuevasUrls = new ArrayList<>();
+            try {
+                Collection<Part> allParts = request.getParts();
+                String uploadPath = getServletContext().getRealPath("/uploads/propiedades");
+                for (Part part : allParts) {
+                    if ("imagenesFiles".equals(part.getName()) && part.getSize() > 0) {
+                        String fileName = FileUploadUtil.saveImageDual(part, "propiedades", uploadPath);
+                        if (fileName != null) {
+                            nuevasUrls.add("/uploads/propiedades/" + fileName);
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            // Nuevas URLs de texto
+            String urlsStr = request.getParameter("imagenesUrls");
+            if (urlsStr != null && !urlsStr.isBlank()) {
+                String[] lines = urlsStr.split("[\\r\\n,]+");
+                for (String u : lines) {
+                    if (!u.trim().isBlank()) nuevasUrls.add(u.trim());
+                }
+            }
+
+            // Agregar imágenes nuevas si las hay
+            if (!nuevasUrls.isEmpty()) {
+                propiedadDAO.agregarImagenes(idPropiedad, nuevasUrls);
+            }
+
             propiedadDAO.actualizar(p, idCaracs);
             auditoriaDAO.registrar(usuario.getIdUsuario(), "UPDATE", "propiedad", idPropiedad, request.getRemoteAddr());
 
             response.sendRedirect(request.getContextPath() + "/inmobiliaria/propiedades?msg=propiedad_actualizada");
         } catch (Exception e) {
-            response.sendRedirect(request.getContextPath() + "/inmobiliaria/propiedades?error=" + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/inmobiliaria/propiedades?error=" + java.net.URLEncoder.encode(e.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
+        }
+    }
+
+    private void procesarEliminarImagenPropiedad(HttpServletRequest request, HttpServletResponse response, Usuario usuario) 
+            throws IOException {
+        try {
+            int idPropiedad = Integer.parseInt(request.getParameter("idPropiedad"));
+            int idImagen = Integer.parseInt(request.getParameter("idImagen"));
+            String url = propiedadDAO.eliminarImagen(idImagen);
+            if (url != null && url.startsWith("/uploads/propiedades/")) {
+                String fileName = url.substring("/uploads/propiedades/".length());
+                String uploadPath = getServletContext().getRealPath("/uploads/propiedades");
+                FileUploadUtil.deleteImage("propiedades", fileName, uploadPath);
+            }
+            auditoriaDAO.registrar(usuario.getIdUsuario(), "DELETE", "imagen_propiedad", idImagen, request.getRemoteAddr());
+            response.sendRedirect(request.getContextPath() + "/inmobiliaria/propiedad-editar?id=" + idPropiedad + "&msg=imagen_eliminada");
+        } catch (Exception e) {
+            response.sendRedirect(request.getContextPath() + "/inmobiliaria/propiedades?error=" + java.net.URLEncoder.encode(e.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
         }
     }
 
@@ -301,7 +337,7 @@ public class InmobiliariaServlet extends HttpServlet {
             auditoriaDAO.registrar(usuario.getIdUsuario(), "DELETE", "propiedad", idPropiedad, request.getRemoteAddr());
             response.sendRedirect(request.getContextPath() + "/inmobiliaria/propiedades?msg=propiedad_eliminada");
         } catch (Exception e) {
-            response.sendRedirect(request.getContextPath() + "/inmobiliaria/propiedades?error=" + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/inmobiliaria/propiedades?error=" + java.net.URLEncoder.encode(e.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
         }
     }
 
@@ -314,18 +350,6 @@ public class InmobiliariaServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/inmobiliaria/citas?msg=estado_actualizado");
         } catch (Exception e) {
             response.sendRedirect(request.getContextPath() + "/inmobiliaria/citas?error=" + e.getMessage());
-        }
-    }
-
-    private void procesarCambiarEstadoSolicitud(HttpServletRequest request, HttpServletResponse response) 
-            throws IOException {
-        try {
-            int idSol = Integer.parseInt(request.getParameter("idSolicitud"));
-            String nuevoEstado = request.getParameter("nuevoEstado");
-            solicitudDAO.cambiarEstado(idSol, nuevoEstado);
-            response.sendRedirect(request.getContextPath() + "/inmobiliaria/solicitudes?msg=estado_actualizado");
-        } catch (Exception e) {
-            response.sendRedirect(request.getContextPath() + "/inmobiliaria/solicitudes?error=" + e.getMessage());
         }
     }
 }

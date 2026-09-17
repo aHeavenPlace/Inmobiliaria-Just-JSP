@@ -125,7 +125,7 @@
                             <div class="col-md-6 col-xl-4">
                                 <div class="property-card">
                                     <div class="property-thumb-wrap">
-                                        <img src="${p.imagenPrincipal}" alt="${p.titulo}" class="property-thumb" loading="lazy">
+                                        <img src="${p.getImagenPrincipalUrl(pageContext.request.contextPath)}" alt="${p.titulo}" class="property-thumb" loading="lazy">
                                         <span class="badge-operation">${p.tipoOperacion}</span>
                                         <span class="badge-type">${p.tipoNombre}</span>
                                         <button class="btn-favorite-heart ${p.esFavorito ? 'is-favorite' : ''}" 

@@ -74,25 +74,25 @@ INSERT INTO usuario_rol (id_usuario, id_rol) VALUES
 
 -- Perfiles
 INSERT INTO perfil (id_usuario, nombres, apellidos, documento, telefono, direccion, foto_url) VALUES
-(1, 'Super', 'Administrador', '1000000001', '3001000001', 'Calle 1 #1-1, Bucaramanga', 'https://i.pravatar.cc/150?u=admin'),
-(2, 'Carlos', 'Ramírez', '1020304050', '3101234567', 'Carrera 15 #27-30, Bucaramanga', 'https://i.pravatar.cc/150?u=carlos'),
-(3, 'María', 'González', '1020304051', '3112345678', 'Calle 45 #20-15, Bucaramanga', 'https://i.pravatar.cc/150?u=maria'),
-(4, 'Pedro', 'Martínez', '1020304052', '3123456789', 'Av. Quebrada Seca #32-10, Bucaramanga', 'https://i.pravatar.cc/150?u=pedro'),
-(5, 'Juan', 'Pérez', '1024567890', '3134567890', 'Calle 50 #10-20, Bucaramanga', 'https://i.pravatar.cc/150?u=juan'),
-(6, 'Ana', 'López', '1024567891', '3145678901', 'Carrera 27 #45-12, Bucaramanga', 'https://i.pravatar.cc/150?u=ana'),
-(7, 'Luis', 'García', '1024567892', '3156789012', 'Calle 35 #18-40, Floridablanca', 'https://i.pravatar.cc/150?u=luis'),
-(8, 'Carmen', 'Rodríguez', '1024567893', '3167890123', 'Av. Libertad #20-50, Girón', 'https://i.pravatar.cc/150?u=carmen'),
-(9, 'Diego', 'Hernández', '1024567894', '3178901234', 'Calle 100 #15-30, Piedecuesta', 'https://i.pravatar.cc/150?u=diego'),
-(10, 'Laura', 'Torres', '1024567895', '3189012345', 'Carrera 33 #50-25, Bucaramanga', 'https://i.pravatar.cc/150?u=laura'),
-(11, 'Miguel', 'Sánchez', '1024567896', '3190123456', 'Calle 60 #25-10, Bucaramanga', 'https://i.pravatar.cc/150?u=miguel'),
-(12, 'Sofía', 'Castro', '1024567897', '3201234567', 'Av. Principal #5-100, Floridablanca', 'https://i.pravatar.cc/150?u=sofia'),
+(1, 'Super', 'Administrador', '1000000001', '3001000001', 'Calle 1 #1-1, Bucaramanga', NULL),
+(2, 'Carlos', 'Ramírez', '1020304050', '3101234567', 'Carrera 15 #27-30, Bucaramanga', NULL),
+(3, 'María', 'González', '1020304051', '3112345678', 'Calle 45 #20-15, Bucaramanga', NULL),
+(4, 'Pedro', 'Martínez', '1020304052', '3123456789', 'Av. Quebrada Seca #32-10, Bucaramanga', NULL),
+(5, 'Juan', 'Pérez', '1024567890', '3134567890', 'Calle 50 #10-20, Bucaramanga', NULL),
+(6, 'Ana', 'López', '1024567891', '3145678901', 'Carrera 27 #45-12, Bucaramanga', NULL),
+(7, 'Luis', 'García', '1024567892', '3156789012', 'Calle 35 #18-40, Floridablanca', NULL),
+(8, 'Carmen', 'Rodríguez', '1024567893', '3167890123', 'Av. Libertad #20-50, Girón', NULL),
+(9, 'Diego', 'Hernández', '1024567894', '3178901234', 'Calle 100 #15-30, Piedecuesta', NULL),
+(10, 'Laura', 'Torres', '1024567895', '3189012345', 'Carrera 33 #50-25, Bucaramanga', NULL),
+(11, 'Miguel', 'Sánchez', '1024567896', '3190123456', 'Calle 60 #25-10, Bucaramanga', NULL),
+(12, 'Sofía', 'Castro', '1024567897', '3201234567', 'Av. Principal #5-100, Floridablanca', NULL),
 (13, 'Usuario', 'Inactivo', '9999999999', '3000000000', 'Dirección desconocida', NULL);
 
 -- Inmobiliarias
 INSERT INTO inmobiliaria (nombre, nit, telefono, correo_contacto, direccion, logo_url, estado) VALUES
-('Vesta Inmobiliaria SAS', '900.123.456-7', '6071234567', 'contacto@vesta.com', 'Carrera 15 #27-30, Bucaramanga', 'https://i.pravatar.cc/150?u=vesta', 'activo'),
-('Hogar Verde Inmobiliaria', '900.234.567-8', '6072345678', 'info@hogarverde.com', 'Calle 45 #20-15, Bucaramanga', 'https://i.pravatar.cc/150?u=hv', 'activo'),
-('Casa Propia Inmobiliaria', '900.345.678-9', '6073456789', 'ventas@casapropia.com', 'Av. Quebrada Seca #32-10, Bucaramanga', 'https://i.pravatar.cc/150?u=cp', 'activo');
+('Vesta Inmobiliaria SAS', '900.123.456-7', '6071234567', 'contacto@vesta.com', 'Carrera 15 #27-30, Bucaramanga', NULL, 'activo'),
+('Hogar Verde Inmobiliaria', '900.234.567-8', '6072345678', 'info@hogarverde.com', 'Calle 45 #20-15, Bucaramanga', NULL, 'activo'),
+('Casa Propia Inmobiliaria', '900.345.678-9', '6073456789', 'ventas@casapropia.com', 'Av. Quebrada Seca #32-10, Bucaramanga', NULL, 'activo');
 
 -- Ciudades
 INSERT INTO ciudad (nombre, departamento, codigo_postal) VALUES

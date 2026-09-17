@@ -114,10 +114,10 @@ public class ReportesDAO {
                     try (ResultSet rs = ps.executeQuery()) { if (rs.next()) metricas.put("citasPendientes", rs.getInt(1)); }
                 }
 
-                String q3 = "SELECT COUNT(*) FROM solicitud s JOIN propiedad p ON s.id_propiedad = p.id_propiedad WHERE p.id_inmobiliaria = ? AND s.estado = 'en_revision'";
+                String q3 = "SELECT COUNT(*) FROM propiedad WHERE id_inmobiliaria = ? AND estado = 'disponible'";
                 try (PreparedStatement ps = conn.prepareStatement(q3)) {
                     ps.setInt(1, idInmobiliaria);
-                    try (ResultSet rs = ps.executeQuery()) { if (rs.next()) metricas.put("solicitudesRevision", rs.getInt(1)); }
+                    try (ResultSet rs = ps.executeQuery()) { if (rs.next()) metricas.put("propiedadesDisponibles", rs.getInt(1)); }
                 }
             } else if (idCliente != null && idCliente > 0) {
                 // Métricas Cliente
@@ -132,16 +132,13 @@ public class ReportesDAO {
                     ps.setInt(1, idCliente);
                     try (ResultSet rs = ps.executeQuery()) { if (rs.next()) metricas.put("misCitasActivas", rs.getInt(1)); }
                 }
-
-                String q3 = "SELECT COUNT(*) FROM solicitud WHERE id_cliente = ?";
-                try (PreparedStatement ps = conn.prepareStatement(q3)) {
-                    ps.setInt(1, idCliente);
-                    try (ResultSet rs = ps.executeQuery()) { if (rs.next()) metricas.put("misSolicitudes", rs.getInt(1)); }
-                }
             } else {
                 // Métricas Administrador
                 try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM usuario");
                      ResultSet rs = ps.executeQuery()) { if (rs.next()) metricas.put("totalUsuarios", rs.getInt(1)); }
+
+                try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM propiedad");
+                     ResultSet rs = ps.executeQuery()) { if (rs.next()) metricas.put("totalPropiedades", rs.getInt(1)); }
 
                 try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM propiedad WHERE estado = 'disponible'");
                      ResultSet rs = ps.executeQuery()) { if (rs.next()) metricas.put("propiedadesDisponibles", rs.getInt(1)); }
@@ -149,8 +146,8 @@ public class ReportesDAO {
                 try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM cita");
                      ResultSet rs = ps.executeQuery()) { if (rs.next()) metricas.put("totalCitas", rs.getInt(1)); }
 
-                try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM auditoria");
-                     ResultSet rs = ps.executeQuery()) { if (rs.next()) metricas.put("totalAuditorias", rs.getInt(1)); }
+                try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM solicitud");
+                     ResultSet rs = ps.executeQuery()) { if (rs.next()) metricas.put("totalSolicitudes", rs.getInt(1)); }
             }
         } catch (SQLException e) {
             System.err.println("[ReportesDAO] Error calculando métricas de dashboard: " + e.getMessage());

@@ -7,12 +7,9 @@ import com.inmobiliariavesta.dao.FavoritoDAO;
 import com.inmobiliariavesta.dao.PerfilDAO;
 import com.inmobiliariavesta.dao.PropiedadDAO;
 import com.inmobiliariavesta.dao.ReportesDAO;
-import com.inmobiliariavesta.dao.SolicitudDAO;
 import com.inmobiliariavesta.model.Cita;
-import com.inmobiliariavesta.model.DocumentoSolicitud;
 import com.inmobiliariavesta.model.Perfil;
 import com.inmobiliariavesta.model.Propiedad;
-import com.inmobiliariavesta.model.Solicitud;
 import com.inmobiliariavesta.model.Usuario;
 import com.inmobiliariavesta.util.FileUploadUtil;
 import jakarta.servlet.ServletException;
@@ -40,8 +37,6 @@ import java.util.Map;
     "/cliente/favorito-toggle",
     "/cliente/citas",
     "/cliente/agendar-cita",
-    "/cliente/solicitudes",
-    "/cliente/radicar-solicitud",
     "/cliente/perfil"
 })
 @MultipartConfig(
@@ -54,7 +49,6 @@ public class ClienteServlet extends HttpServlet {
     private PropiedadDAO propiedadDAO = new PropiedadDAO();
     private FavoritoDAO favoritoDAO = new FavoritoDAO();
     private CitaDAO citaDAO = new CitaDAO();
-    private SolicitudDAO solicitudDAO = new SolicitudDAO();
     private PerfilDAO perfilDAO = new PerfilDAO();
     private ReportesDAO reportesDAO = new ReportesDAO();
     private AuditoriaDAO auditoriaDAO = new AuditoriaDAO();
@@ -83,11 +77,6 @@ public class ClienteServlet extends HttpServlet {
             case "/cliente/citas":
                 request.setAttribute("citas", citaDAO.listarPorCliente(idCliente));
                 request.getRequestDispatcher("/WEB-INF/views/cliente/citas.jsp").forward(request, response);
-                break;
-
-            case "/cliente/solicitudes":
-                request.setAttribute("solicitudes", solicitudDAO.listarPorCliente(idCliente));
-                request.getRequestDispatcher("/WEB-INF/views/cliente/solicitudes.jsp").forward(request, response);
                 break;
 
             case "/cliente/perfil":
@@ -120,10 +109,6 @@ public class ClienteServlet extends HttpServlet {
                 procesarAgendarCita(request, response, idCliente);
                 break;
 
-            case "/cliente/radicar-solicitud":
-                procesarRadicarSolicitud(request, response, idCliente);
-                break;
-
             case "/cliente/perfil":
                 procesarActualizarPerfil(request, response, usuario);
                 break;
@@ -138,12 +123,10 @@ public class ClienteServlet extends HttpServlet {
             throws ServletException, IOException {
         Map<String, Object> metricas = reportesDAO.obtenerMetricasDashboard(null, idCliente);
         List<Cita> proximasCitas = citaDAO.listarPorCliente(idCliente);
-        List<Solicitud> ultimasSolicitudes = solicitudDAO.listarPorCliente(idCliente);
         List<Propiedad> misFavoritos = favoritoDAO.listarPorUsuario(idCliente);
 
         request.setAttribute("metricas", metricas);
         request.setAttribute("citas", proximasCitas);
-        request.setAttribute("solicitudes", ultimasSolicitudes);
         request.setAttribute("favoritos", misFavoritos);
 
         request.getRequestDispatcher("/WEB-INF/views/cliente/dashboard.jsp").forward(request, response);
@@ -197,35 +180,6 @@ public class ClienteServlet extends HttpServlet {
         }
     }
 
-    private void procesarRadicarSolicitud(HttpServletRequest request, HttpServletResponse response, int idCliente) 
-            throws IOException {
-        String idPropiedadStr = request.getParameter("idPropiedad");
-        String tipo = request.getParameter("tipo"); // 'compra' o 'arriendo'
-        String comentarios = request.getParameter("comentarios");
-        String nombreDocumento = request.getParameter("nombreDocumento");
-
-        try {
-            int idPropiedad = Integer.parseInt(idPropiedadStr);
-            Solicitud s = new Solicitud();
-            s.setIdPropiedad(idPropiedad);
-            s.setIdCliente(idCliente);
-            s.setTipo(tipo != null ? tipo : "compra");
-            s.setComentarios(comentarios);
-
-            List<DocumentoSolicitud> docs = new ArrayList<>();
-            if (nombreDocumento != null && !nombreDocumento.isBlank()) {
-                docs.add(new DocumentoSolicitud(0, 0, nombreDocumento, "/uploads/docs/" + nombreDocumento, "Documento Identidad / Soporte", null));
-            }
-
-            int idSol = solicitudDAO.crearSolicitud(s, docs);
-            auditoriaDAO.registrar(idCliente, "INSERT", "solicitud", idSol, request.getRemoteAddr());
-
-            response.sendRedirect(request.getContextPath() + "/cliente/solicitudes?msg=solicitud_radicada");
-        } catch (SQLException e) {
-            response.sendRedirect(request.getContextPath() + "/cliente/solicitudes?error=error_solicitud");
-        }
-    }
-
     private void procesarActualizarPerfil(HttpServletRequest request, HttpServletResponse response, Usuario usuario) 
             throws IOException, ServletException {
         String nombres = request.getParameter("nombres");
@@ -235,39 +189,46 @@ public class ClienteServlet extends HttpServlet {
         String direccion = request.getParameter("direccion");
         
         // Manejar subida de foto de perfil
-        Part fotoPart = request.getPart("fotoPerfil");
+        Part fotoPart = null;
+        try {
+            fotoPart = request.getPart("fotoPerfil");
+        } catch (Exception ignored) {}
+
         String fotoUrl = null;
-        
         if (fotoPart != null && fotoPart.getSize() > 0) {
             try {
-                String uploadPath = getServletContext().getRealPath("") + "/uploads/perfiles";
-                fotoUrl = FileUploadUtil.saveImage(fotoPart, uploadPath);
+                String uploadPath = getServletContext().getRealPath("/uploads/perfiles");
+                fotoUrl = FileUploadUtil.saveImageDual(fotoPart, "perfiles", uploadPath);
             } catch (IllegalArgumentException e) {
-                response.sendRedirect(request.getContextPath() + "/cliente/perfil?error=" + e.getMessage());
+                response.sendRedirect(request.getContextPath() + "/cliente/perfil?error=" + java.net.URLEncoder.encode(e.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
                 return;
             } catch (Exception e) {
-                // Si falla la subida, continuamos sin actualizar la foto
+                System.err.println("[ClienteServlet] Error al subir foto de perfil: " + e.getMessage());
                 fotoUrl = null;
             }
         }
 
         Perfil p = new Perfil();
         p.setIdUsuario(usuario.getIdUsuario());
-        p.setNombres(nombres);
-        p.setApellidos(apellidos);
-        p.setDocumento(documento);
-        p.setTelefono(telefono);
-        p.setDireccion(direccion);
+        p.setNombres(nombres != null ? nombres.trim() : "");
+        p.setApellidos(apellidos != null ? apellidos.trim() : "");
+        p.setDocumento(documento != null ? documento.trim() : "");
+        p.setTelefono(telefono != null ? telefono.trim() : "");
+        p.setDireccion(direccion != null ? direccion.trim() : "");
         
-        // Si se subió una nueva foto, la usamos; si no, mantenemos la existente
+        // Si se subió una nueva foto, la usamos; si no, mantenemos la existente (filtrando pravatar)
         if (fotoUrl != null) {
             p.setFotoUrl(fotoUrl);
-        } else if (usuario.getPerfil() != null) {
+        } else if (usuario.getPerfil() != null && usuario.getPerfil().getFotoUrl() != null 
+                   && !usuario.getPerfil().getFotoUrl().toLowerCase().contains("pravatar")) {
             p.setFotoUrl(usuario.getPerfil().getFotoUrl());
+        } else {
+            p.setFotoUrl(null);
         }
 
-        perfilDAO.actualizar(p);
+        perfilDAO.guardarOActualizar(p);
         usuario.setPerfil(p);
+        request.getSession().setAttribute("usuarioLogueado", usuario);
         request.getSession().setAttribute("nombreUsuario", p.getNombreCompleto());
         auditoriaDAO.registrar(usuario.getIdUsuario(), "UPDATE", "perfil", usuario.getIdUsuario(), request.getRemoteAddr());
 

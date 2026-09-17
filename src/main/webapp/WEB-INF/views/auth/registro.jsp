@@ -14,7 +14,7 @@
                             <span class="logo-icon">🏛️</span>
                         </div>
                         <h2 class="fw-bold text-vesta-charcoal mb-1">Crea tu Cuenta en Vesta</h2>
-                        <p class="text-vesta-gray muted">Únete a Vesta Inmobiliaria para guardar favoritos, agendar citas y radicar solicitudes</p>
+                        <p class="text-vesta-gray muted">Únete a Vesta Inmobiliaria para guardar favoritos y agendar citas en línea</p>
                     </div>
 
                     <c:if test="${not empty error}">
@@ -67,9 +67,7 @@
                                 <select name="tipoCuenta" class="form-select-vesta">
                                     <option value="cliente" selected>Cliente (Comprador o Arrendatario)</option>
                                     <option value="inmobiliaria">Agente / Inmobiliaria (Publicar inmuebles)</option>
-                                    <option value="admin">Administrador (Solo para primer acceso - Futura eliminación)</option>
                                 </select>
-                                <small class="text-muted">Nota: La opción Administrador es temporal para crear el primer usuario admin. Se eliminará en futuras versiones.</small>
                             </div>
                         </div>
 

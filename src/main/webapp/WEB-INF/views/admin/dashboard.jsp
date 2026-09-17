@@ -11,7 +11,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="fw-bold text-primary mb-1">Panel de Administración Global</h2>
-                <p class="text-muted mb-0">Vista consolidada del sistema inmobiliario: usuarios, propiedades, actividad y auditoría</p>
+                <p class="text-muted mb-0">Vista consolidada del sistema inmobiliario: usuarios, propiedades, citas y solicitudes</p>
             </div>
             <span class="badge bg-danger text-white px-3 py-2 rounded-pill fs-6">
                 <i class="bi bi-shield-fill-exclamation me-1"></i> Acceso Super Administrador
@@ -74,35 +74,58 @@
         </div>
 
         <div class="row g-4">
-            <!-- Actividad de Auditoría Reciente -->
+            <!-- Inmuebles Recientes en la Plataforma -->
             <div class="col-lg-8">
                 <div class="bg-white p-4 rounded-4 border border-light shadow-sm">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold text-primary mb-0"><i class="bi bi-journal-code me-2"></i> Auditoría Reciente del Sistema</h5>
-                        <a href="${pageContext.request.contextPath}/admin/auditoria" class="small text-muted">Ver log completo</a>
+                        <h5 class="fw-bold text-primary mb-0"><i class="bi bi-houses me-2"></i> Inmuebles Recientes en la Plataforma</h5>
+                        <a href="${pageContext.request.contextPath}/admin/propiedades" class="small text-muted">Ver todas</a>
                     </div>
-                    <div class="d-flex flex-column gap-2">
-                        <c:forEach var="log" items="${actividadReciente}">
-                            <div class="d-flex align-items-center gap-3 p-3 rounded-3 bg-light border border-light">
-                                <div class="text-center" style="min-width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(13, 148, 136, 0.12);">
-                                    <i class="bi bi-activity text-primary"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="fw-semibold text-dark small">${log.accion} — <span class="text-muted">${log.tablaAfectada}</span></div>
-                                    <small class="text-muted">
-                                        <i class="bi bi-person me-1"></i> ${log.usuarioCorreo}
-                                        &bull; <i class="bi bi-clock me-1"></i> ${log.fechaFormateada}
-                                    </small>
-                                </div>
-                                <span class="badge bg-light text-dark border small">${log.tablaAfectada}</span>
-                            </div>
-                        </c:forEach>
-                        <c:if test="${empty actividadReciente}">
-                            <div class="text-center py-3 text-muted small">
-                                <i class="bi bi-shield-check fs-3 d-block mb-2"></i>
-                                No hay actividad registrada recientemente.
-                            </div>
-                        </c:if>
+                    <div class="table-responsive">
+                        <table class="table-vesta">
+                            <thead>
+                                <tr>
+                                    <th>Inmueble</th>
+                                    <th>Ciudad</th>
+                                    <th>Tipo</th>
+                                    <th>Operación</th>
+                                    <th>Precio</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:forEach var="p" items="${propiedadesRecientes}">
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <img src="${p.getImagenPrincipalUrl(pageContext.request.contextPath)}" alt="${p.titulo}" class="rounded-2 shadow-xs" width="40" height="40" style="object-fit: cover;">
+                                                <div class="text-truncate" style="max-width: 180px;">
+                                                    <strong class="text-primary d-block text-truncate">${p.titulo}</strong>
+                                                    <small class="text-muted">${p.inmobiliariaNombre}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>${p.ciudadNombre}</td>
+                                        <td><span class="badge bg-light text-dark border">${p.tipoNombre}</span></td>
+                                        <td><span class="badge bg-primary text-uppercase">${p.tipoOperacion}</span></td>
+                                        <td class="fw-bold text-primary">${p.precioFormateado}</td>
+                                        <td>
+                                            <span class="badge-vesta ${p.estado == 'disponible' ? 'badge-vesta-success' : p.estado == 'vendido' ? 'badge-vesta-info' : 'badge-vesta-warning'}">
+                                                ${p.estado}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                                <c:if test="${empty propiedadesRecientes}">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">
+                                            <i class="bi bi-houses fs-3 d-block mb-2"></i>
+                                            No hay inmuebles registrados aún en el catálogo.
+                                        </td>
+                                    </tr>
+                                </c:if>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -115,11 +138,11 @@
                         <a href="${pageContext.request.contextPath}/admin/usuarios" class="btn btn-vesta-outline justify-content-start">
                             <i class="bi bi-people me-2"></i> Gestionar Usuarios & Roles
                         </a>
+                        <a href="${pageContext.request.contextPath}/admin/propiedades" class="btn btn-vesta-outline justify-content-start">
+                            <i class="bi bi-houses me-2"></i> Inmuebles & Catálogo Global
+                        </a>
                         <a href="${pageContext.request.contextPath}/admin/catalogos" class="btn btn-vesta-outline justify-content-start">
                             <i class="bi bi-sliders me-2"></i> Parametrización & Catálogos
-                        </a>
-                        <a href="${pageContext.request.contextPath}/admin/auditoria" class="btn btn-vesta-outline justify-content-start">
-                            <i class="bi bi-journal-text me-2"></i> Log de Auditoría Completo
                         </a>
                         <a href="${pageContext.request.contextPath}/reportes/exportar-csv" class="btn btn-vesta-primary justify-content-start">
                             <i class="bi bi-file-earmark-spreadsheet me-2"></i> Exportar Reporte CSV

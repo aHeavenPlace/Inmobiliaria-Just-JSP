@@ -62,8 +62,15 @@
                     <c:when test="${not empty sessionScope.usuarioLogueado}">
                         <div class="dropdown">
                             <button class="btn btn-vesta-outline dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
-                                <c:choose><c:when test="${not empty sessionScope.usuarioLogueado.perfil.fotoUrl}"><img src="${pageContext.request.contextPath}/uploads/perfiles/${sessionScope.usuarioLogueado.perfil.fotoUrl}" 
-                                     alt="Avatar" class="rounded-circle" width="28" height="28" style="object-fit: cover;"></c:when><c:otherwise><div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.9rem;">${not empty sessionScope.nombreUsuario ? fn:substring(sessionScope.nombreUsuario, 0, 1) : 'U'}</div></c:otherwise></c:choose>
+                                <c:choose>
+                                    <c:when test="${not empty sessionScope.usuarioLogueado.perfil.fotoUrl}">
+                                        <img src="${sessionScope.usuarioLogueado.perfil.fotoUrl.startsWith('http') ? sessionScope.usuarioLogueado.perfil.fotoUrl : pageContext.request.contextPath.concat('/uploads/perfiles/').concat(sessionScope.usuarioLogueado.perfil.fotoUrl)}" 
+                                             alt="Avatar" class="rounded-circle" width="28" height="28" style="object-fit: cover;">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.9rem;">${not empty sessionScope.nombreUsuario ? fn:substring(sessionScope.nombreUsuario, 0, 1) : 'U'}</div>
+                                    </c:otherwise>
+                                </c:choose>
                                 <span>${sessionScope.nombreUsuario}</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" style="border-radius: var(--radius-md);">
@@ -73,6 +80,7 @@
                                     </h6>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item py-2" href="${pageContext.request.contextPath}/cliente/perfil"><i class="bi bi-person-gear me-2" style="color: var(--color-accent);"></i> Mi Perfil</a></li>
                                 <c:if test="${sessionScope.usuarioLogueado.hasRole('admin')}">
                                     <li><a class="dropdown-item py-2" href="${pageContext.request.contextPath}/admin/dashboard"><i class="bi bi-shield-lock me-2" style="color: var(--color-primary);"></i> Panel Administrador</a></li>
                                 </c:if>
@@ -83,7 +91,6 @@
                                     <li><a class="dropdown-item py-2" href="${pageContext.request.contextPath}/cliente/dashboard"><i class="bi bi-person-circle me-2" style="color: var(--status-success);"></i> Mi Panel</a></li>
                                     <li><a class="dropdown-item py-2" href="${pageContext.request.contextPath}/cliente/favoritos"><i class="bi bi-heart me-2" style="color: var(--status-danger);"></i> Mis Favoritos</a></li>
                                     <li><a class="dropdown-item py-2" href="${pageContext.request.contextPath}/cliente/citas"><i class="bi bi-calendar-event me-2" style="color: var(--status-warning);"></i> Mis Citas</a></li>
-                                    <li><a class="dropdown-item py-2" href="${pageContext.request.contextPath}/cliente/solicitudes"><i class="bi bi-file-earmark-text me-2" style="color: var(--status-info);"></i> Mis Solicitudes</a></li>
                                 </c:if>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item py-2 text-danger fw-semibold" href="${pageContext.request.contextPath}/logout"><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>

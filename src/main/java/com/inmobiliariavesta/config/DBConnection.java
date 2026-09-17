@@ -28,12 +28,12 @@ public class DBConnection {
             Class.forName("org.postgresql.Driver");
 
             String host = dbProps.getProperty("db.host", "aws-0-us-east-2.pooler.supabase.com");
-            String port = dbProps.getProperty("db.port", "5432");
+            String port = dbProps.getProperty("db.port", "6543");
             String dbName = dbProps.getProperty("db.name", "postgres");
             String user = dbProps.getProperty("db.user", "postgres.ymfqanafhpayxvxvsrhw");
             String pass = dbProps.getProperty("db.password", "parcialJava1");
 
-            String jdbcUrl = String.format("jdbc:postgresql://%s:%s/%s?sslmode=require", host, port, dbName);
+            String jdbcUrl = String.format("jdbc:postgresql://%s:%s/%s?sslmode=require&prepareThreshold=0", host, port, dbName);
 
             HikariConfig config = new HikariConfig();
             config.setJdbcUrl(jdbcUrl);
@@ -70,11 +70,11 @@ public class DBConnection {
 
         // Fallback directo con DriverManager si el pool no estuviera disponible
         String host = dbProps.getProperty("db.host", "aws-0-us-east-2.pooler.supabase.com");
-        String port = dbProps.getProperty("db.port", "5432");
+        String port = dbProps.getProperty("db.port", "6543");
         String dbName = dbProps.getProperty("db.name", "postgres");
         String user = dbProps.getProperty("db.user", "postgres.ymfqanafhpayxvxvsrhw");
         String pass = dbProps.getProperty("db.password", "parcialJava1");
-        String jdbcUrl = String.format("jdbc:postgresql://%s:%s/%s?sslmode=require", host, port, dbName);
+        String jdbcUrl = String.format("jdbc:postgresql://%s:%s/%s?sslmode=require&prepareThreshold=0", host, port, dbName);
 
         return DriverManager.getConnection(jdbcUrl, user, pass);
     }

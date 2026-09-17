@@ -11,7 +11,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="fw-bold text-primary mb-1">Panel de Gestión Inmobiliaria</h2>
-                <p class="text-muted mb-0">Control integral de publicaciones, citas con clientes y solicitudes de crédito/arrendamiento</p>
+                <p class="text-muted mb-0">Control integral de publicaciones, agenda de visitas y métricas del catálogo</p>
             </div>
             <a href="${pageContext.request.contextPath}/inmobiliaria/propiedad-nueva" class="btn btn-vesta-accent">
                 <i class="bi bi-plus-lg"></i> Publicar Nueva Propiedad
@@ -36,12 +36,12 @@
             <div class="col-md-4">
                 <div class="stat-card">
                     <div>
-                        <span class="text-muted text-uppercase fw-bold small">Citas Pendientes</span>
-                        <div class="stat-number">${metricas.citasPendientes != null ? metricas.citasPendientes : 0}</div>
-                        <small class="text-warning"><i class="bi bi-clock-history"></i> Por confirmar</small>
+                        <span class="text-muted text-uppercase fw-bold small">Inmuebles Disponibles</span>
+                        <div class="stat-number">${metricas.propiedadesDisponibles != null ? metricas.propiedadesDisponibles : 0}</div>
+                        <small class="text-primary"><i class="bi bi-tag"></i> Listas para negociar</small>
                     </div>
-                    <div class="stat-icon-wrap stat-icon-amber">
-                        <i class="bi bi-calendar-event"></i>
+                    <div class="stat-icon-wrap stat-icon-green">
+                        <i class="bi bi-patch-check"></i>
                     </div>
                 </div>
             </div>
@@ -49,12 +49,12 @@
             <div class="col-md-4">
                 <div class="stat-card">
                     <div>
-                        <span class="text-muted text-uppercase fw-bold small">Solicitudes por Evaluar</span>
-                        <div class="stat-number">${metricas.solicitudesRevision != null ? metricas.solicitudesRevision : 0}</div>
-                        <small class="text-primary"><i class="bi bi-file-earmark-arrow-up"></i> En estudio de garantías</small>
+                        <span class="text-muted text-uppercase fw-bold small">Citas Pendientes</span>
+                        <div class="stat-number">${metricas.citasPendientes != null ? metricas.citasPendientes : 0}</div>
+                        <small class="text-warning"><i class="bi bi-clock-history"></i> Por confirmar</small>
                     </div>
-                    <div class="stat-icon-wrap stat-icon-green">
-                        <i class="bi bi-file-earmark-check"></i>
+                    <div class="stat-icon-wrap stat-icon-amber">
+                        <i class="bi bi-calendar-event"></i>
                     </div>
                 </div>
             </div>
@@ -85,7 +85,7 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center gap-3">
-                                        <img src="${p.imagenPrincipal}" alt="${p.titulo}" class="rounded-3" width="50" height="50" style="object-fit: cover;">
+                                        <img src="${p.getImagenPrincipalUrl(pageContext.request.contextPath)}" alt="${p.titulo}" class="rounded-3 shadow-xs" width="50" height="50" style="object-fit: cover;">
                                         <div>
                                             <strong class="text-primary d-block">${p.titulo}</strong>
                                             <small class="text-muted">${p.matriculaInmobiliaria}</small>

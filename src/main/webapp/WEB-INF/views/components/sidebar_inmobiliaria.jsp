@@ -5,8 +5,8 @@
     <div class="sidebar-user">
         <c:choose>
             <c:when test="${not empty sessionScope.usuarioLogueado.perfil.fotoUrl}">
-                <img src="${pageContext.request.contextPath}/uploads/perfiles/${sessionScope.usuarioLogueado.perfil.fotoUrl}"
-                     alt="Avatar" class="sidebar-avatar">
+                <img src="${sessionScope.usuarioLogueado.perfil.fotoUrl.startsWith('http') ? sessionScope.usuarioLogueado.perfil.fotoUrl : pageContext.request.contextPath.concat('/uploads/perfiles/').concat(sessionScope.usuarioLogueado.perfil.fotoUrl)}"
+                     alt="Avatar" class="sidebar-avatar" style="object-fit: cover;">
             </c:when>
             <c:otherwise>
                 <div class="sidebar-avatar bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
@@ -39,13 +39,13 @@
             <i class="bi bi-calendar-event"></i>
             <span>Gestión de Citas</span>
         </a>
-        <a href="${pageContext.request.contextPath}/inmobiliaria/solicitudes" class="sidebar-link ${pageContext.request.servletPath == '/inmobiliaria/solicitudes' ? 'active' : ''}">
-            <i class="bi bi-file-earmark-check"></i>
-            <span>Solicitudes Recibidas</span>
-        </a>
         <a href="${pageContext.request.contextPath}/inmobiliaria/reportes" class="sidebar-link ${pageContext.request.servletPath == '/inmobiliaria/reportes' ? 'active' : ''}">
             <i class="bi bi-graph-up-arrow"></i>
             <span>Reportes & Métricas</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/cliente/perfil" class="sidebar-link ${pageContext.request.servletPath == '/cliente/perfil' ? 'active' : ''}">
+            <i class="bi bi-person-gear"></i>
+            <span>Mi Perfil</span>
         </a>
         <hr class="my-2 text-muted opacity-25">
         <a href="${pageContext.request.contextPath}/catalogo" class="sidebar-link">

@@ -35,4 +35,11 @@ public class ImagenPropiedad implements Serializable {
 
     public int getOrden() { return orden; }
     public void setOrden(int orden) { this.orden = orden; }
+
+    public String getUrlCompleta(String contextPath) {
+        if (url == null || url.isBlank()) return "";
+        if (url.startsWith("http://") || url.startsWith("https://")) return url;
+        if (contextPath == null || contextPath.isEmpty()) return url;
+        return contextPath + (url.startsWith("/") ? "" : "/") + url;
+    }
 }

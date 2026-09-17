@@ -5,8 +5,8 @@
     <div class="sidebar-user">
         <c:choose>
             <c:when test="${not empty sessionScope.usuarioLogueado.perfil.fotoUrl}">
-                <img src="${pageContext.request.contextPath}/uploads/perfiles/${sessionScope.usuarioLogueado.perfil.fotoUrl}"
-                     alt="Avatar" class="sidebar-avatar">
+                <img src="${sessionScope.usuarioLogueado.perfil.fotoUrl.startsWith('http') ? sessionScope.usuarioLogueado.perfil.fotoUrl : pageContext.request.contextPath.concat('/uploads/perfiles/').concat(sessionScope.usuarioLogueado.perfil.fotoUrl)}"
+                     alt="Avatar" class="sidebar-avatar" style="object-fit: cover;">
             </c:when>
             <c:otherwise>
                 <div class="sidebar-avatar bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
@@ -31,13 +31,17 @@
             <i class="bi bi-people"></i>
             <span>Usuarios & Roles</span>
         </a>
+        <a href="${pageContext.request.contextPath}/admin/propiedades" class="sidebar-link ${pageContext.request.servletPath.startsWith('/admin/propiedad') ? 'active' : ''}">
+            <i class="bi bi-houses"></i>
+            <span>Inmuebles & Catálogo</span>
+        </a>
         <a href="${pageContext.request.contextPath}/admin/catalogos" class="sidebar-link ${pageContext.request.servletPath == '/admin/catalogos' ? 'active' : ''}">
             <i class="bi bi-sliders"></i>
             <span>Parametrización</span>
         </a>
-        <a href="${pageContext.request.contextPath}/admin/auditoria" class="sidebar-link ${pageContext.request.servletPath == '/admin/auditoria' ? 'active' : ''}">
-            <i class="bi bi-journal-text"></i>
-            <span>Auditoría del Sistema</span>
+        <a href="${pageContext.request.contextPath}/cliente/perfil" class="sidebar-link ${pageContext.request.servletPath == '/cliente/perfil' ? 'active' : ''}">
+            <i class="bi bi-person-gear"></i>
+            <span>Mi Perfil</span>
         </a>
         <hr class="my-2 text-muted opacity-25">
         <a href="${pageContext.request.contextPath}/catalogo" class="sidebar-link">

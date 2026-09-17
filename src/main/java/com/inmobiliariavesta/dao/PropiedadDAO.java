@@ -417,6 +417,102 @@ public class PropiedadDAO {
         }
     }
 
+    /**
+     * Elimina una imagen específica por su ID y retorna la URL para permitir borrar el archivo si es local.
+     */
+    public String eliminarImagen(int idImagen) {
+        String sqlSelect = "SELECT url FROM imagen_propiedad WHERE id_imagen = ?";
+        String sqlDelete = "DELETE FROM imagen_propiedad WHERE id_imagen = ?";
+        try (Connection conn = DBConnection.getConnection()) {
+            String url = null;
+            try (PreparedStatement psS = conn.prepareStatement(sqlSelect)) {
+                psS.setInt(1, idImagen);
+                try (ResultSet rs = psS.executeQuery()) {
+                    if (rs.next()) {
+                        url = rs.getString("url");
+                    }
+                }
+            }
+            if (url != null) {
+                try (PreparedStatement psD = conn.prepareStatement(sqlDelete)) {
+                    psD.setInt(1, idImagen);
+                    psD.executeUpdate();
+                }
+            }
+            return url;
+        } catch (SQLException e) {
+            System.err.println("[PropiedadDAO] Error al eliminar imagen: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Agrega nuevas imágenes a una propiedad existente asignando orden incremental.
+     */
+    public boolean agregarImagenes(int idPropiedad, List<String> urls) {
+        if (urls == null || urls.isEmpty()) return true;
+        String sqlCount = "SELECT COALESCE(MAX(orden), 0) FROM imagen_propiedad WHERE id_propiedad = ?";
+        String sqlInsert = "INSERT INTO imagen_propiedad (id_propiedad, url, descripcion, orden) VALUES (?, ?, ?, ?)";
+
+        try (Connection conn = DBConnection.getConnection()) {
+            int maxOrden = 0;
+            try (PreparedStatement psC = conn.prepareStatement(sqlCount)) {
+                psC.setInt(1, idPropiedad);
+                try (ResultSet rs = psC.executeQuery()) {
+                    if (rs.next()) maxOrden = rs.getInt(1);
+                }
+            }
+            try (PreparedStatement psI = conn.prepareStatement(sqlInsert)) {
+                for (String u : urls) {
+                    if (u != null && !u.isBlank()) {
+                        psI.setInt(1, idPropiedad);
+                        psI.setString(2, u.trim());
+                        psI.setString(3, "Foto " + (++maxOrden));
+                        psI.setInt(4, maxOrden);
+                        psI.addBatch();
+                    }
+                }
+                psI.executeBatch();
+            }
+            return true;
+        } catch (SQLException e) {
+            System.err.println("[PropiedadDAO] Error al agregar imágenes: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Lista todas las propiedades para el panel de administración global.
+     */
+    public List<Propiedad> listarTodasAdmin() {
+        List<Propiedad> lista = new ArrayList<>();
+        String sql = "SELECT p.*, " +
+                     "c.nombre AS ciudad_nombre, " +
+                     "tp.nombre AS tipo_nombre, " +
+                     "i.nombre AS inmobiliaria_nombre, " +
+                     "(SELECT url FROM imagen_propiedad ip WHERE ip.id_propiedad = p.id_propiedad ORDER BY orden ASC, id_imagen ASC LIMIT 1) AS imagen_principal " +
+                     "FROM propiedad p " +
+                     "INNER JOIN ciudad c ON p.id_ciudad = c.id_ciudad " +
+                     "INNER JOIN tipo_propiedad tp ON p.id_tipo = tp.id_tipo " +
+                     "INNER JOIN inmobiliaria i ON p.id_inmobiliaria = i.id_inmobiliaria " +
+                     "ORDER BY p.fecha_publicacion DESC, p.id_propiedad DESC";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Propiedad p = mapearPropiedad(rs);
+                p.setCiudadNombre(rs.getString("ciudad_nombre"));
+                p.setTipoNombre(rs.getString("tipo_nombre"));
+                p.setInmobiliariaNombre(rs.getString("inmobiliaria_nombre"));
+                p.setImagenPrincipal(rs.getString("imagen_principal"));
+                lista.add(p);
+            }
+        } catch (SQLException e) {
+            System.err.println("[PropiedadDAO] Error al listar propiedades admin: " + e.getMessage());
+        }
+        return lista;
+    }
+
     private Propiedad mapearPropiedad(ResultSet rs) throws SQLException {
         Propiedad p = new Propiedad();
         p.setIdPropiedad(rs.getInt("id_propiedad"));

@@ -114,6 +114,15 @@ public class Propiedad implements Serializable {
         if (imagenes != null && !imagenes.isEmpty()) return imagenes.get(0).getUrl();
         return "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800";
     }
+
+    public String getImagenPrincipalUrl(String contextPath) {
+        String img = getImagenPrincipal();
+        if (img == null || img.isBlank()) return "";
+        if (img.startsWith("http://") || img.startsWith("https://")) return img;
+        if (contextPath == null || contextPath.isEmpty()) return img;
+        return contextPath + (img.startsWith("/") ? "" : "/") + img;
+    }
+
     public void setImagenPrincipal(String imagenPrincipal) { this.imagenPrincipal = imagenPrincipal; }
 
     public boolean isEsFavorito() { return esFavorito; }

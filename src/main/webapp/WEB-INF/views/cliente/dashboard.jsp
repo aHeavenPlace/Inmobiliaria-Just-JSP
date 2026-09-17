@@ -11,7 +11,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="fw-bold text-primary mb-1">¡Hola, ${sessionScope.nombreUsuario}!</h2>
-                <p class="text-muted mb-0">Gestiona tus citas programadas, estado de solicitudes y propiedades guardadas</p>
+                <p class="text-muted mb-0">Gestiona tus visitas agendadas y tus propiedades favoritas guardadas</p>
             </div>
             <a href="${pageContext.request.contextPath}/catalogo" class="btn btn-vesta-accent">
                 <i class="bi bi-search"></i> Explorar Propiedades
@@ -27,7 +27,7 @@
 
         <!-- Tarjetas de Métricas -->
         <div class="row g-4 mb-4">
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="stat-card">
                     <div>
                         <span class="text-muted text-uppercase fw-bold small">Mis Favoritos</span>
@@ -40,7 +40,7 @@
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="stat-card">
                     <div>
                         <span class="text-muted text-uppercase fw-bold small">Citas Activas</span>
@@ -49,19 +49,6 @@
                     </div>
                     <div class="stat-icon-wrap stat-icon-blue">
                         <i class="bi bi-calendar-event"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="stat-card">
-                    <div>
-                        <span class="text-muted text-uppercase fw-bold small">Mis Solicitudes</span>
-                        <div class="stat-number">${metricas.misSolicitudes != null ? metricas.misSolicitudes : 0}</div>
-                        <small class="text-primary"><i class="bi bi-file-earmark-check"></i> En proceso</small>
-                    </div>
-                    <div class="stat-icon-wrap stat-icon-green">
-                        <i class="bi bi-file-earmark-text"></i>
                     </div>
                 </div>
             </div>
@@ -102,34 +89,35 @@
                 </div>
             </div>
 
-            <!-- Solicitudes Recientes -->
+            <!-- Favoritos Recientes -->
             <div class="col-lg-6">
                 <div class="bg-white p-4 rounded-4 border border-light shadow-sm h-100">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold text-primary mb-0"><i class="bi bi-file-earmark-arrow-up me-2"></i> Solicitudes Radicadas</h5>
-                        <a href="${pageContext.request.contextPath}/cliente/solicitudes" class="small text-muted">Ver todas</a>
+                        <h5 class="fw-bold text-primary mb-0"><i class="bi bi-heart me-2"></i> Inmuebles Guardados</h5>
+                        <a href="${pageContext.request.contextPath}/cliente/favoritos" class="small text-muted">Ver todos</a>
                     </div>
                     <c:choose>
-                        <c:when test="${empty solicitudes}">
+                        <c:when test="${empty favoritos}">
                             <div class="text-center py-4 text-muted">
-                                <i class="bi bi-folder2-open fs-2 mb-2 d-block"></i>
-                                <p class="small mb-0">No has radicado solicitudes aún.</p>
+                                <i class="bi bi-heartbreak fs-2 mb-2 d-block"></i>
+                                <p class="small mb-0">No has guardado propiedades favoritas aún.</p>
                             </div>
                         </c:when>
                         <c:otherwise>
                             <div class="d-flex flex-column gap-3">
-                                <c:forEach var="s" items="${solicitudes}" end="3">
+                                <c:forEach var="f" items="${favoritos}" end="3">
                                     <div class="p-3 rounded-3 bg-light border border-light d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="fw-bold mb-1">${s.propiedadTitulo}</h6>
-                                            <small class="text-muted d-block">Tipo: <strong class="text-capitalize">${s.tipo}</strong> &bull; Radicado: ${s.fechaSolicitudFormateada}</small>
-                                            <c:if test="${not empty s.documentos}">
-                                                <small class="text-primary"><i class="bi bi-paperclip"></i> ${s.documentos.size()} documento(s) adjunto(s)</small>
-                                            </c:if>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <img src="${f.getImagenPrincipalUrl(pageContext.request.contextPath)}" alt="${f.titulo}" 
+                                                 class="rounded-3 shadow-xs" width="48" height="48" style="object-fit: cover;">
+                                            <div>
+                                                <h6 class="fw-bold mb-1 text-truncate" style="max-width: 220px;">${f.titulo}</h6>
+                                                <small class="text-muted d-block">${f.ciudadNombre} &bull; <strong class="text-primary">${f.precioFormateado}</strong></small>
+                                            </div>
                                         </div>
-                                        <span class="badge-vesta ${s.estado == 'aprobada' ? 'badge-vesta-success' : s.estado == 'en_revision' ? 'badge-vesta-info' : s.estado == 'pendiente' ? 'badge-vesta-warning' : 'badge-vesta-danger'}">
-                                            ${s.estado}
-                                        </span>
+                                        <a href="${pageContext.request.contextPath}/propiedad?id=${f.idPropiedad}" class="btn btn-sm btn-vesta-outline">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
                                     </div>
                                 </c:forEach>
                             </div>

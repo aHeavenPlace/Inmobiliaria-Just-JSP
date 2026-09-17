@@ -5,8 +5,8 @@
     <div class="sidebar-user">
         <c:choose>
             <c:when test="${not empty sessionScope.usuarioLogueado.perfil.fotoUrl}">
-                <img src="${pageContext.request.contextPath}/uploads/perfiles/${sessionScope.usuarioLogueado.perfil.fotoUrl}"
-                     alt="Avatar" class="sidebar-avatar">
+                <img src="${sessionScope.usuarioLogueado.perfil.fotoUrl.startsWith('http') ? sessionScope.usuarioLogueado.perfil.fotoUrl : pageContext.request.contextPath.concat('/uploads/perfiles/').concat(sessionScope.usuarioLogueado.perfil.fotoUrl)}"
+                     alt="Avatar" class="sidebar-avatar" style="object-fit: cover;">
             </c:when>
             <c:otherwise>
                 <div class="sidebar-avatar bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
@@ -34,10 +34,6 @@
         <a href="${pageContext.request.contextPath}/cliente/citas" class="sidebar-link ${pageContext.request.servletPath == '/cliente/citas' ? 'active' : ''}">
             <i class="bi bi-calendar-check"></i>
             <span>Mis Citas</span>
-        </a>
-        <a href="${pageContext.request.contextPath}/cliente/solicitudes" class="sidebar-link ${pageContext.request.servletPath == '/cliente/solicitudes' ? 'active' : ''}">
-            <i class="bi bi-file-earmark-text"></i>
-            <span>Mis Solicitudes</span>
         </a>
         <a href="${pageContext.request.contextPath}/cliente/perfil" class="sidebar-link ${pageContext.request.servletPath == '/cliente/perfil' ? 'active' : ''}">
             <i class="bi bi-person-gear"></i>
