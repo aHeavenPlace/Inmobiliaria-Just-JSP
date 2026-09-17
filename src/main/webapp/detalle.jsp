@@ -2,7 +2,6 @@
          import="java.sql.*,java.text.NumberFormat,java.util.Locale" %>
 <%-- detalle.jsp — Detalle de propiedad + Agendar Cita (JSP Modelo 1) --%>
 <%@ include file="/components/conexion.jsp" %>
-<%@ include file="/components/header.jsp" %>
 <%
     String ctx = request.getContextPath();
     NumberFormat nf = NumberFormat.getNumberInstance(new Locale("es","CO"));
@@ -13,7 +12,7 @@
     String mensajeCita = null;
     String errorCita   = null;
 
-    if (idParam == null || idParam.isEmpty()) {
+    if (idParam == null || idParam.trim().isEmpty()) {
         response.sendRedirect(ctx + "/catalogo.jsp");
         return;
     }
@@ -80,17 +79,24 @@
 
         // Imágenes
         ResultSet rsImg = conn.prepareStatement(
-            "SELECT url FROM imagen_propiedad WHERE id_propiedad=" + idParam + " ORDER BY orden ASC")
+            "SELECT url FROM imagen_propiedad WHERE id_propiedad=" + Integer.parseInt(idParam) + " ORDER BY orden ASC")
             .executeQuery();
-        while (rsImg.next()) imagenes.add(rsImg.getString("url"));
+        while (rsImg.next()) {
+            String u = rsImg.getString("url");
+            if (u != null && !u.isEmpty()) imagenes.add(u);
+        }
 
-        // Características
-        ResultSet rsCar = conn.prepareStatement(
-            "SELECT car.nombre, pc.valor FROM propiedad_caracteristica pc " +
-            "JOIN caracteristica car ON car.id_caracteristica = pc.id_caracteristica " +
-            "WHERE pc.id_propiedad=" + idParam)
-            .executeQuery();
-        while (rsCar.next()) caracteristicas.add(new String[]{ rsCar.getString("nombre"), rsCar.getString("valor") });
+        // Características (car.nombre, car.descripcion)
+        try {
+            ResultSet rsCar = conn.prepareStatement(
+                "SELECT car.nombre, car.descripcion FROM propiedad_caracteristica pc " +
+                "JOIN caracteristica car ON car.id_caracteristica = pc.id_caracteristica " +
+                "WHERE pc.id_propiedad=" + Integer.parseInt(idParam))
+                .executeQuery();
+            while (rsCar.next()) caracteristicas.add(new String[]{ rsCar.getString("nombre"), rsCar.getString("descripcion") });
+        } catch (Exception exCar) {
+            System.err.println("Error cargando características: " + exCar.getMessage());
+        }
 
     } catch (SQLException ex) {
         ex.printStackTrace();
@@ -101,7 +107,11 @@
     String precioStr = "—";
     try { precioStr = "$" + nf.format(Long.parseLong(prop.get("precio"))); } catch (Exception e) {}
     String imgPrincipal = imagenes.isEmpty() ? "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1200" : imagenes.get(0);
+    if (imgPrincipal.startsWith("/uploads/")) {
+        imgPrincipal = ctx + imgPrincipal;
+    }
 %>
+<%@ include file="/components/header.jsp" %>
 
 <div class="container my-5">
     <nav style="font-size:0.88rem;margin-bottom:20px;">
@@ -128,10 +138,12 @@
             </div>
             <% if (imagenes.size() > 1) { %>
             <div class="d-flex gap-2 mt-2 overflow-auto pb-1">
-                <% for (String img : imagenes) { %>
-                <img src="<%= img %>" alt="imagen"
+                <% for (String img : imagenes) { 
+                    String thumbSrc = img.startsWith("/uploads/") ? ctx + img : img;
+                %>
+                <img src="<%= thumbSrc %>" alt="imagen"
                      style="width:90px;height:65px;object-fit:cover;border-radius:var(--radius-sm);cursor:pointer;border:2px solid transparent;"
-                     onclick="this.closest('.col-lg-8').querySelector('img').src='<%= img %>'">
+                     onclick="this.closest('.col-lg-8').querySelector('img').src='<%= thumbSrc %>'">
                 <% } %>
             </div>
             <% } %>
