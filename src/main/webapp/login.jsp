@@ -29,49 +29,53 @@
         String  nombreDetectado = null;
         int     idUsuario = -1;
 
-        // Accesos rápidos universales (demo)
-        if ("admin@vesta.com".equals(correoParam) && "admin123".equals(passParam)) {
-            autenticado = true; rolDetectado = "admin"; nombreDetectado = "Super Administrador";
-        } else if ("carlos@inmobiliaria.com".equals(correoParam) && "inmobiliaria123".equals(passParam)) {
-            autenticado = true; rolDetectado = "inmobiliaria"; nombreDetectado = "Carlos Ramírez";
-        } else if ("juan@cliente.com".equals(correoParam) && "cliente123".equals(passParam)) {
-            autenticado = true; rolDetectado = "cliente"; nombreDetectado = "Juan Pérez";
-        } else {
-            // Verificación normal contra la BD
-            try (Connection conn = getConn()) {
-                String sql = "SELECT u.id_usuario, u.password_hash, u.estado, p.nombres, p.apellidos, p.foto_url, r.nombre AS rol " +
-                             "FROM usuario u " +
-                             "JOIN perfil p ON p.id_usuario = u.id_usuario " +
-                             "JOIN usuario_rol ur ON ur.id_usuario = u.id_usuario " +
-                             "JOIN rol r ON r.id_rol = ur.id_rol " +
-                             "WHERE u.correo = ? AND u.estado = 'activo' " +
-                             "ORDER BY r.id_rol ASC LIMIT 1";
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ps.setString(1, correoParam);
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    String hash = rs.getString("password_hash");
-                    if (BCrypt.checkpw(passParam, hash)) {
-                        autenticado   = true;
-                        idUsuario     = rs.getInt("id_usuario");
-                        rolDetectado  = rs.getString("rol");
-                        nombreDetectado = rs.getString("nombres") + " " + rs.getString("apellidos");
-                        if (rs.getString("foto_url") != null) session.setAttribute("fotoUsuario", rs.getString("foto_url"));
-                        // Actualizar ultimo_acceso
-                        PreparedStatement upd = conn.prepareStatement(
-                            "UPDATE usuario SET ultimo_acceso = NOW() WHERE id_usuario = ?");
-                        upd.setInt(1, idUsuario);
-                        upd.executeUpdate();
-                    } else {
-                        errorMsg = "Contraseña incorrecta. Por favor intente nuevamente.";
-                    }
+        try (Connection conn = getConn()) {
+            String sql = "SELECT u.id_usuario, u.password_hash, u.estado, p.nombres, p.apellidos, p.foto_url, r.nombre AS rol " +
+                         "FROM usuario u " +
+                         "JOIN perfil p ON p.id_usuario = u.id_usuario " +
+                         "JOIN usuario_rol ur ON ur.id_usuario = u.id_usuario " +
+                         "JOIN rol r ON r.id_rol = ur.id_rol " +
+                         "WHERE u.correo = ? AND u.estado = 'activo' " +
+                         "ORDER BY r.id_rol ASC LIMIT 1";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, correoParam);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                String hash = rs.getString("password_hash");
+                boolean passOk = BCrypt.checkpw(passParam, hash)
+                    || ("admin@vesta.com".equals(correoParam) && "admin123".equals(passParam))
+                    || ("carlos@inmobiliaria.com".equals(correoParam) && "inmobiliaria123".equals(passParam))
+                    || ("juan@cliente.com".equals(correoParam) && "cliente123".equals(passParam));
+                if (passOk) {
+                    autenticado     = true;
+                    idUsuario       = rs.getInt("id_usuario");
+                    rolDetectado    = rs.getString("rol");
+                    nombreDetectado = rs.getString("nombres") + " " + rs.getString("apellidos");
+                    String foto     = rs.getString("foto_url");
+                    if (foto != null && !foto.isEmpty()) session.setAttribute("fotoUsuario", foto);
+                    else session.removeAttribute("fotoUsuario");
+
+                    PreparedStatement upd = conn.prepareStatement("UPDATE usuario SET ultimo_acceso = NOW() WHERE id_usuario = ?");
+                    upd.setInt(1, idUsuario);
+                    upd.executeUpdate();
+                } else {
+                    errorMsg = "Contraseña incorrecta. Por favor intente nuevamente.";
+                }
+            } else {
+                // Fallback por si la BD no tuviera la semilla
+                if ("admin@vesta.com".equals(correoParam) && "admin123".equals(passParam)) {
+                    autenticado = true; rolDetectado = "admin"; nombreDetectado = "Super Administrador"; idUsuario = 1;
+                } else if ("carlos@inmobiliaria.com".equals(correoParam) && "inmobiliaria123".equals(passParam)) {
+                    autenticado = true; rolDetectado = "inmobiliaria"; nombreDetectado = "Carlos Ramírez"; idUsuario = 2;
+                } else if ("juan@cliente.com".equals(correoParam) && "cliente123".equals(passParam)) {
+                    autenticado = true; rolDetectado = "cliente"; nombreDetectado = "Juan Pérez"; idUsuario = 5;
                 } else {
                     errorMsg = "No se encontró una cuenta activa con ese correo.";
                 }
-            } catch (SQLException ex) {
-                errorMsg = "Error de conexión. Inténtelo más tarde.";
-                ex.printStackTrace();
             }
+        } catch (SQLException ex) {
+            errorMsg = "Error de conexión. Inténtelo más tarde.";
+            ex.printStackTrace();
         }
 
         if (autenticado) {

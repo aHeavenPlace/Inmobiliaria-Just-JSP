@@ -4,14 +4,19 @@
     String correoInmob  = (String) session.getAttribute("correoUsuario");
     String uriInmob     = request.getRequestURI();
     String ctxInmob     = request.getContextPath();
+    String fotoInmob    = (String) session.getAttribute("fotoUsuario");
     String inicialInmob = (nombreInmob != null && !nombreInmob.isEmpty())
                         ? String.valueOf(nombreInmob.charAt(0)).toUpperCase() : "I";
 %>
 <div class="dashboard-sidebar">
     <div class="sidebar-user">
         <div class="sidebar-avatar d-flex align-items-center justify-content-center fw-bold"
-             style="background:linear-gradient(135deg,#6B8C9E,#C9A962);color:#fff;font-size:1.3rem;">
-            <%= inicialInmob %>
+             style="background:linear-gradient(135deg,#6B8C9E,#C9A962);color:#fff;font-size:1.3rem;overflow:hidden;">
+            <% if (fotoInmob != null && !fotoInmob.isEmpty()) { %>
+                <img src="<%= fotoInmob %>" alt="Avatar" style="width:100%;height:100%;object-fit:cover;">
+            <% } else { %>
+                <%= inicialInmob %>
+            <% } %>
         </div>
         <div class="overflow-hidden">
             <h6 class="fw-bold mb-0 text-truncate"><%= nombreInmob != null ? nombreInmob : "Agente" %></h6>
