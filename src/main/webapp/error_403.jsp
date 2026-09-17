@@ -1,0 +1,13 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ include file="/components/header.jsp" %>
+<div style="min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px;">
+    <div>
+        <div style="font-size:6rem;font-weight:800;color:var(--status-warning);line-height:1;">403</div>
+        <h2 class="fw-bold mt-2">Acceso denegado</h2>
+        <p class="text-muted mb-4">No tienes permisos para acceder a esta sección.</p>
+        <a href="<%= request.getContextPath() %>/index.jsp" class="btn btn-vesta-primary">
+            <i class="bi bi-house me-1"></i> Volver al inicio
+        </a>
+    </div>
+</div>
+<%@ include file="/components/footer.jsp" %>
