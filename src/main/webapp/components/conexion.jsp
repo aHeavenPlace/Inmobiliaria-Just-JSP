@@ -1,10 +1,7 @@
 <%@ page import="java.sql.Connection, java.sql.DriverManager" %>
 <%!
-    /* =========================================================
-       conexion.jsp — Conexión directa JDBC a PostgreSQL (Supabase)
-       Compatible con Tomcat 8.5 / Java 11 / JSP 2.3
-       Incluir en cada JSP con: <%@ include file="/components/conexion.jsp" %>
-       ========================================================= */
+    // conexion.jsp - Conexión directa JDBC a PostgreSQL (Supabase)
+    // Compatible con Tomcat 8.5 / Java 11 / JSP 2.3
     static {
         try {
             Class.forName("org.postgresql.Driver");
