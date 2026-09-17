@@ -9,7 +9,7 @@
     try (Connection conn = getConn()) {
         ResultSet r1 = conn.createStatement().executeQuery("SELECT COUNT(*) FROM usuario WHERE estado='activo'");
         if (r1.next()) totalUsuarios = r1.getInt(1);
-        ResultSet r2 = conn.createStatement().executeQuery("SELECT COUNT(*) FROM propiedad WHERE estado='activo'");
+        ResultSet r2 = conn.createStatement().executeQuery("SELECT COUNT(*) FROM propiedad WHERE estado='disponible'");
         if (r2.next()) totalProps = r2.getInt(1);
         ResultSet r3 = conn.createStatement().executeQuery("SELECT COUNT(*) FROM cita");
         if (r3.next()) totalCitas = r3.getInt(1);

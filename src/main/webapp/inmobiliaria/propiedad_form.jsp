@@ -37,15 +37,15 @@
                 titulo      = rp.getString("titulo");
                 descripcion = rp.getString("descripcion") != null ? rp.getString("descripcion") : "";
                 precio      = rp.getString("precio");
-                operacion   = rp.getString("operacion");
+                operacion   = rp.getString("tipo_operacion");
                 direccion   = rp.getString("direccion") != null ? rp.getString("direccion") : "";
                 idCiudad    = rp.getString("id_ciudad");
                 idTipo      = rp.getString("id_tipo");
-                idInmob     = rp.getString("id_inmobiliaria") != null ? rp.getString("id_inmobiliaria") : "";
-                hab         = rp.getString("num_habitaciones") != null ? rp.getString("num_habitaciones") : "";
-                ban         = rp.getString("num_banos") != null ? rp.getString("num_banos") : "";
+                idInmob     = rp.getString("id_inmobiliaria") != null ? rp.getString("id_inmobiliaria") : "1";
+                hab         = rp.getString("habitaciones") != null ? rp.getString("habitaciones") : "";
+                ban         = rp.getString("banos") != null ? rp.getString("banos") : "";
                 area        = rp.getString("area_m2") != null ? rp.getString("area_m2") : "";
-                parq        = String.valueOf(rp.getBoolean("parqueadero"));
+                parq        = "true";
             }
             PreparedStatement psImgLoad = conn.prepareStatement("SELECT url FROM imagen_propiedad WHERE id_propiedad=? ORDER BY orden ASC LIMIT 1");
             psImgLoad.setInt(1, Integer.parseInt(editId));
@@ -99,22 +99,30 @@
         }
 
         try (Connection conn = getConn()) {
+            int inmobId = (idInmob != null && !idInmob.isEmpty()) ? Integer.parseInt(idInmob) : 1;
+            String opNorm = (operacion != null && operacion.equalsIgnoreCase("arriendo")) ? "arriendo" : "venta";
+            int numHab = (hab != null && !hab.isEmpty()) ? Integer.parseInt(hab) : 0;
+            int numBan = (ban != null && !ban.isEmpty()) ? Integer.parseInt(ban) : 0;
+            double numArea = (area != null && !area.isEmpty()) ? Double.parseDouble(area) : 0.0;
+
             if (editId != null && !editId.isEmpty()) {
                 // Actualizar
                 PreparedStatement ps = conn.prepareStatement(
-                    "UPDATE propiedad SET titulo=?, descripcion=?, precio=?, operacion=?, direccion=?, " +
-                    "id_ciudad=?, id_tipo=?, id_inmobiliaria=?, num_habitaciones=?, num_banos=?, area_m2=?, parqueadero=? " +
+                    "UPDATE propiedad SET titulo=?, descripcion=?, precio=?, tipo_operacion=?, direccion=?, " +
+                    "id_ciudad=?, id_tipo=?, id_inmobiliaria=?, habitaciones=?, banos=?, area_m2=? " +
                     "WHERE id_propiedad=?");
-                ps.setString(1, titulo); ps.setString(2, descripcion);
-                ps.setLong(3, Long.parseLong(precio)); ps.setString(4, operacion);
-                ps.setString(5, direccion); ps.setInt(6, Integer.parseInt(idCiudad));
+                ps.setString(1, titulo);
+                ps.setString(2, descripcion);
+                ps.setBigDecimal(3, new java.math.BigDecimal(precio));
+                ps.setString(4, opNorm);
+                ps.setString(5, direccion);
+                ps.setInt(6, Integer.parseInt(idCiudad));
                 ps.setInt(7, Integer.parseInt(idTipo));
-                if (idInmob != null && !idInmob.isEmpty()) ps.setInt(8, Integer.parseInt(idInmob)); else ps.setNull(8, Types.INTEGER);
-                if (hab != null && !hab.isEmpty()) ps.setInt(9, Integer.parseInt(hab)); else ps.setNull(9, Types.INTEGER);
-                if (ban != null && !ban.isEmpty()) ps.setInt(10, Integer.parseInt(ban)); else ps.setNull(10, Types.INTEGER);
-                if (area != null && !area.isEmpty()) ps.setDouble(11, Double.parseDouble(area)); else ps.setNull(11, Types.DOUBLE);
-                ps.setBoolean(12, "true".equals(parq));
-                ps.setInt(13, Integer.parseInt(editId));
+                ps.setInt(8, inmobId);
+                ps.setInt(9, numHab);
+                ps.setInt(10, numBan);
+                ps.setDouble(11, numArea);
+                ps.setInt(12, Integer.parseInt(editId));
                 ps.executeUpdate();
 
                 // Actualizar imagen si se proporcionó una nueva
@@ -136,21 +144,24 @@
                 }
                 msgForm = "Propiedad actualizada exitosamente.";
             } else {
-                // Insertar
+                // Insertar con matricula autogenerada y columnas correctas
+                String matricula = "MAT-" + System.currentTimeMillis() + "-" + ((int)(Math.random() * 900) + 100);
                 PreparedStatement ps = conn.prepareStatement(
-                    "INSERT INTO propiedad (titulo, descripcion, precio, operacion, direccion, id_ciudad, id_tipo, id_inmobiliaria, " +
-                    "id_usuario, num_habitaciones, num_banos, area_m2, parqueadero, estado) " +
-                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,'activo')", Statement.RETURN_GENERATED_KEYS);
-                ps.setString(1, titulo); ps.setString(2, descripcion);
-                ps.setLong(3, Long.parseLong(precio)); ps.setString(4, operacion);
-                ps.setString(5, direccion); ps.setInt(6, Integer.parseInt(idCiudad));
-                ps.setInt(7, Integer.parseInt(idTipo));
-                if (idInmob != null && !idInmob.isEmpty()) ps.setInt(8, Integer.parseInt(idInmob)); else ps.setNull(8, Types.INTEGER);
-                ps.setInt(9, (Integer) idUsrObj);
-                if (hab != null && !hab.isEmpty()) ps.setInt(10, Integer.parseInt(hab)); else ps.setNull(10, Types.INTEGER);
-                if (ban != null && !ban.isEmpty()) ps.setInt(11, Integer.parseInt(ban)); else ps.setNull(11, Types.INTEGER);
-                if (area != null && !area.isEmpty()) ps.setDouble(12, Double.parseDouble(area)); else ps.setNull(12, Types.DOUBLE);
-                ps.setBoolean(13, "true".equals(parq));
+                    "INSERT INTO propiedad (id_inmobiliaria, id_ciudad, id_tipo, matricula_inmobiliaria, " +
+                    "titulo, descripcion, direccion, precio, area_m2, habitaciones, banos, tipo_operacion, estado) " +
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?, 'disponible')", Statement.RETURN_GENERATED_KEYS);
+                ps.setInt(1, inmobId);
+                ps.setInt(2, Integer.parseInt(idCiudad));
+                ps.setInt(3, Integer.parseInt(idTipo));
+                ps.setString(4, matricula);
+                ps.setString(5, titulo);
+                ps.setString(6, descripcion);
+                ps.setString(7, direccion);
+                ps.setBigDecimal(8, new java.math.BigDecimal(precio));
+                ps.setDouble(9, numArea);
+                ps.setInt(10, numHab);
+                ps.setInt(11, numBan);
+                ps.setString(12, opNorm);
                 ps.executeUpdate();
                 ResultSet gk = ps.getGeneratedKeys();
                 int nuevoId = gk.next() ? gk.getInt(1) : -1;

@@ -22,14 +22,13 @@
 
     if (idUsrObj != null) {
         try (Connection conn = getConn()) {
-            String sql = "SELECT ci.id_cita, ci.fecha_hora, ci.estado, ci.observaciones, " +
+            String sql = "SELECT ci.id_cita, ci.fecha_hora, ci.estado, ci.notas AS observaciones, " +
                          "p.titulo AS propiedad, c.nombre AS ciudad, " +
-                         "per.nombres || ' ' || per.apellidos AS agente " +
+                         "COALESCE(inm.nombre, 'Inmobiliaria') AS agente " +
                          "FROM cita ci " +
                          "JOIN propiedad p ON p.id_propiedad = ci.id_propiedad " +
                          "JOIN ciudad c ON c.id_ciudad = p.id_ciudad " +
-                         "LEFT JOIN usuario ua ON ua.id_usuario = ci.id_agente " +
-                         "LEFT JOIN perfil per ON per.id_usuario = ua.id_usuario " +
+                         "LEFT JOIN inmobiliaria inm ON inm.id_inmobiliaria = p.id_inmobiliaria " +
                          "WHERE ci.id_cliente=" + (Integer) idUsrObj + " ORDER BY ci.fecha_hora DESC";
             ResultSet rs = conn.createStatement().executeQuery(sql);
             while (rs.next()) {

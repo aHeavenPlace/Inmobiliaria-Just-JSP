@@ -23,7 +23,7 @@
         int idUsr = (Integer) idUsrObj;
         NumberFormat nf = NumberFormat.getNumberInstance(new Locale("es","CO"));
         try (Connection conn = getConn()) {
-            String sql = "SELECT p.id_propiedad, p.titulo, p.precio, p.operacion, tp.nombre AS tipo, c.nombre AS ciudad, " +
+            String sql = "SELECT p.id_propiedad, p.titulo, p.precio, p.tipo_operacion AS operacion, tp.nombre AS tipo, c.nombre AS ciudad, " +
                          "(SELECT img.url FROM imagen_propiedad img WHERE img.id_propiedad = p.id_propiedad LIMIT 1) AS imagen " +
                          "FROM favorito f JOIN propiedad p ON p.id_propiedad = f.id_propiedad " +
                          "JOIN tipo_propiedad tp ON tp.id_tipo = p.id_tipo " +

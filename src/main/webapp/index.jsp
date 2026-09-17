@@ -28,7 +28,7 @@
         while (rsTipo.next()) tipos.add(new String[]{ rsTipo.getString("id_tipo"), rsTipo.getString("nombre") });
 
         // Stats globales
-        ResultSet rsStats  = conn.createStatement().executeQuery("SELECT COUNT(*) AS c FROM propiedad WHERE estado='activo'");
+        ResultSet rsStats  = conn.createStatement().executeQuery("SELECT COUNT(*) AS c FROM propiedad WHERE estado='disponible'");
         if (rsStats.next()) totalPropiedades = rsStats.getInt("c");
         ResultSet rsC2     = conn.createStatement().executeQuery("SELECT COUNT(*) AS c FROM ciudad");
         if (rsC2.next()) totalCiudades = rsC2.getInt("c");
@@ -36,14 +36,14 @@
         if (rsI2.next()) totalInmobiliarias = rsI2.getInt("c");
 
         // Propiedades destacadas
-        String sqlProp = "SELECT p.id_propiedad, p.titulo, p.precio, p.operacion, " +
+        String sqlProp = "SELECT p.id_propiedad, p.titulo, p.precio, p.tipo_operacion AS operacion, " +
                          "tp.nombre AS tipo, c.nombre AS ciudad, " +
-                         "p.num_habitaciones, p.num_banos, p.area_m2, " +
-                         "(SELECT img.url FROM imagen_propiedad img WHERE img.id_propiedad = p.id_propiedad LIMIT 1) AS imagen " +
+                         "p.habitaciones, p.banos, p.area_m2, " +
+                         "(SELECT img.url FROM imagen_propiedad img WHERE img.id_propiedad = p.id_propiedad ORDER BY img.orden ASC LIMIT 1) AS imagen " +
                          "FROM propiedad p " +
                          "JOIN tipo_propiedad tp ON tp.id_tipo = p.id_tipo " +
                          "JOIN ciudad c ON c.id_ciudad = p.id_ciudad " +
-                         "WHERE p.estado = 'activo' ORDER BY p.fecha_publicacion DESC LIMIT 6";
+                         "WHERE p.estado = 'disponible' ORDER BY p.fecha_publicacion DESC LIMIT 6";
         ResultSet rsP = conn.createStatement().executeQuery(sqlProp);
         while (rsP.next()) {
             java.util.Map<String,String> m = new java.util.LinkedHashMap<>();
@@ -53,8 +53,8 @@
             m.put("operacion",   rsP.getString("operacion"));
             m.put("tipo",        rsP.getString("tipo"));
             m.put("ciudad",      rsP.getString("ciudad"));
-            m.put("hab",         rsP.getString("num_habitaciones"));
-            m.put("ban",         rsP.getString("num_banos"));
+            m.put("hab",         rsP.getString("habitaciones"));
+            m.put("ban",         rsP.getString("banos"));
             m.put("area",        rsP.getString("area_m2"));
             m.put("imagen",      rsP.getString("imagen"));
             propiedades.add(m);

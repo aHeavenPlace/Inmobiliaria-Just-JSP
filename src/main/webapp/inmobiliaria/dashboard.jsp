@@ -12,11 +12,11 @@
     if (idUsrObj != null) {
         int idUsr = (Integer) idUsrObj;
         try (Connection conn = getConn()) {
-            ResultSet r1 = conn.prepareStatement("SELECT COUNT(*) FROM propiedad WHERE id_usuario=" + idUsr).executeQuery();
+            ResultSet r1 = conn.createStatement().executeQuery("SELECT COUNT(*) FROM propiedad WHERE estado='disponible'");
             if (r1.next()) totalProp = r1.getInt(1);
-            ResultSet r2 = conn.prepareStatement("SELECT COUNT(*) FROM cita WHERE id_agente=" + idUsr + " AND estado='pendiente'").executeQuery();
+            ResultSet r2 = conn.createStatement().executeQuery("SELECT COUNT(*) FROM cita WHERE estado='pendiente'");
             if (r2.next()) citasPend = r2.getInt(1);
-            ResultSet r3 = conn.prepareStatement("SELECT COUNT(*) FROM cita WHERE id_agente=" + idUsr + " AND estado='realizada'").executeQuery();
+            ResultSet r3 = conn.createStatement().executeQuery("SELECT COUNT(*) FROM cita WHERE estado='realizada'");
             if (r3.next()) citasReal = r3.getInt(1);
         } catch (Exception ex) { ex.printStackTrace(); }
     }

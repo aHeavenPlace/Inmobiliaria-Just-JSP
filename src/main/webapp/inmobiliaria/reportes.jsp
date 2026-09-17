@@ -15,23 +15,22 @@
     int totalActivas = 0; int totalVenta = 0; int totalArriendo = 0;
 
     if (idUsrObj != null) {
-        int idUsr = (Integer) idUsrObj;
         try (Connection conn = getConn()) {
-            ResultSet r1 = conn.prepareStatement("SELECT COUNT(*) FROM propiedad WHERE id_usuario=" + idUsr + " AND estado='activo'").executeQuery();
+            ResultSet r1 = conn.prepareStatement("SELECT COUNT(*) FROM propiedad WHERE estado='disponible'").executeQuery();
             if (r1.next()) totalActivas = r1.getInt(1);
-            ResultSet r2 = conn.prepareStatement("SELECT COUNT(*) FROM propiedad WHERE id_usuario=" + idUsr + " AND operacion='Venta'").executeQuery();
+            ResultSet r2 = conn.prepareStatement("SELECT COUNT(*) FROM propiedad WHERE LOWER(tipo_operacion)='venta'").executeQuery();
             if (r2.next()) totalVenta = r2.getInt(1);
-            ResultSet r3 = conn.prepareStatement("SELECT COUNT(*) FROM propiedad WHERE id_usuario=" + idUsr + " AND operacion='Arriendo'").executeQuery();
+            ResultSet r3 = conn.prepareStatement("SELECT COUNT(*) FROM propiedad WHERE LOWER(tipo_operacion)='arriendo'").executeQuery();
             if (r3.next()) totalArriendo = r3.getInt(1);
 
             ResultSet rc = conn.createStatement().executeQuery(
                 "SELECT c.nombre, COUNT(*) AS total FROM propiedad p JOIN ciudad c ON c.id_ciudad=p.id_ciudad " +
-                "WHERE p.id_usuario=" + idUsr + " GROUP BY c.nombre ORDER BY total DESC LIMIT 10");
+                "GROUP BY c.nombre ORDER BY total DESC LIMIT 10");
             while (rc.next()) porCiudad.add(new String[]{ rc.getString("nombre"), rc.getString("total") });
 
             ResultSet rt = conn.createStatement().executeQuery(
                 "SELECT tp.nombre, COUNT(*) AS total FROM propiedad p JOIN tipo_propiedad tp ON tp.id_tipo=p.id_tipo " +
-                "WHERE p.id_usuario=" + idUsr + " GROUP BY tp.nombre ORDER BY total DESC LIMIT 10");
+                "GROUP BY tp.nombre ORDER BY total DESC LIMIT 10");
             while (rt.next()) porTipo.add(new String[]{ rt.getString("nombre"), rt.getString("total") });
         } catch (Exception ex) { ex.printStackTrace(); }
     }

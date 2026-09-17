@@ -31,19 +31,13 @@
         int idUsuario      = (Integer) session.getAttribute("idUsuario");
 
         try (Connection conn = getConn()) {
-            // Obtener agente de la propiedad para asignarlo
-            ResultSet rsAgt = conn.createStatement().executeQuery(
-                "SELECT id_usuario FROM propiedad WHERE id_propiedad=" + Integer.parseInt(idParam) + " LIMIT 1");
-            int idAgente = rsAgt.next() ? rsAgt.getInt("id_usuario") : 1;
-
             PreparedStatement psCita = conn.prepareStatement(
-                "INSERT INTO cita (id_propiedad, id_cliente, id_agente, fecha_hora, observaciones, estado) " +
-                "VALUES (?,?,?,?::timestamp,?,'pendiente')");
+                "INSERT INTO cita (id_propiedad, id_cliente, fecha_hora, notas, estado) " +
+                "VALUES (?,?,?::timestamp,?,'pendiente')");
             psCita.setInt(1, Integer.parseInt(idParam));
             psCita.setInt(2, idUsuario);
-            psCita.setInt(3, idAgente);
-            psCita.setString(4, fecha + " " + hora + ":00");
-            psCita.setString(5, observacion);
+            psCita.setString(3, fecha + " " + hora + ":00");
+            psCita.setString(4, observacion);
             psCita.executeUpdate();
             mensajeCita = "¡Cita agendada exitosamente! El agente se pondrá en contacto contigo.";
         } catch (Exception ex) {
@@ -54,15 +48,12 @@
     // Cargar datos de la propiedad
     try (Connection conn = getConn()) {
         String sql = "SELECT p.*, tp.nombre AS tipo_nombre, c.nombre AS ciudad_nombre, " +
-                     "c.departamento, i.nombre AS inmob_nombre, " +
-                     "per.nombres AS agente_nombres, per.apellidos AS agente_apellidos, per.telefono AS agente_tel " +
+                     "c.departamento, i.nombre AS inmob_nombre, i.telefono AS inmob_tel, i.correo_contacto AS inmob_correo " +
                      "FROM propiedad p " +
                      "JOIN tipo_propiedad tp ON tp.id_tipo = p.id_tipo " +
                      "JOIN ciudad c ON c.id_ciudad = p.id_ciudad " +
                      "LEFT JOIN inmobiliaria i ON i.id_inmobiliaria = p.id_inmobiliaria " +
-                     "LEFT JOIN usuario u ON u.id_usuario = p.id_usuario " +
-                     "LEFT JOIN perfil per ON per.id_usuario = u.id_usuario " +
-                     "WHERE p.id_propiedad = ? AND p.estado = 'activo'";
+                     "WHERE p.id_propiedad = ?";
         PreparedStatement ps = conn.prepareStatement(sql);
         ps.setInt(1, Integer.parseInt(idParam));
         ResultSet rs = ps.executeQuery();
@@ -72,18 +63,18 @@
             prop.put("titulo",      rs.getString("titulo"));
             prop.put("descripcion", rs.getString("descripcion"));
             prop.put("precio",      rs.getString("precio"));
-            prop.put("operacion",   rs.getString("operacion"));
+            prop.put("operacion",   rs.getString("tipo_operacion"));
             prop.put("tipo",        rs.getString("tipo_nombre"));
             prop.put("ciudad",      rs.getString("ciudad_nombre"));
             prop.put("depto",       rs.getString("departamento"));
-            prop.put("hab",         rs.getString("num_habitaciones"));
-            prop.put("ban",         rs.getString("num_banos"));
+            prop.put("hab",         rs.getString("habitaciones"));
+            prop.put("ban",         rs.getString("banos"));
             prop.put("area",        rs.getString("area_m2"));
-            prop.put("parqueadero", rs.getString("parqueadero"));
+            prop.put("parqueadero", "true");
             prop.put("direccion",   rs.getString("direccion"));
-            prop.put("inmob",       rs.getString("inmob_nombre"));
-            prop.put("agente",      rs.getString("agente_nombres") + " " + rs.getString("agente_apellidos"));
-            prop.put("agenteTel",   rs.getString("agente_tel"));
+            prop.put("inmob",       rs.getString("inmob_nombre") != null ? rs.getString("inmob_nombre") : "Vesta Inmobiliaria");
+            prop.put("agente",      rs.getString("inmob_nombre") != null ? rs.getString("inmob_nombre") : "Vesta Asesor");
+            prop.put("agenteTel",   rs.getString("inmob_tel") != null ? rs.getString("inmob_tel") : "6071234567");
         }
         if (prop == null) { response.sendRedirect(ctx + "/error_404.jsp"); return; }
 

@@ -31,7 +31,7 @@
     java.util.List<java.util.Map<String,String>> citas = new java.util.ArrayList<>();
     if (idUsrObj != null) {
         try (Connection conn = getConn()) {
-            String sql = "SELECT ci.id_cita, ci.fecha_hora, ci.estado, ci.observaciones, " +
+            String sql = "SELECT ci.id_cita, ci.fecha_hora, ci.estado, ci.notas AS observaciones, " +
                          "p.titulo AS propiedad, c.nombre AS ciudad, " +
                          "per.nombres || ' ' || per.apellidos AS cliente, u.correo AS correoCliente " +
                          "FROM cita ci " +
@@ -39,7 +39,7 @@
                          "JOIN ciudad c ON c.id_ciudad = p.id_ciudad " +
                          "JOIN usuario u ON u.id_usuario = ci.id_cliente " +
                          "LEFT JOIN perfil per ON per.id_usuario = ci.id_cliente " +
-                         "WHERE ci.id_agente=" + (Integer) idUsrObj + " ORDER BY ci.fecha_hora DESC";
+                         "ORDER BY ci.fecha_hora DESC";
             ResultSet rs = conn.createStatement().executeQuery(sql);
             while (rs.next()) {
                 java.util.Map<String,String> m = new java.util.LinkedHashMap<>();

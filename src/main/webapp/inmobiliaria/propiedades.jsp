@@ -16,8 +16,8 @@
         String idProp = request.getParameter("idPropiedad");
         String nuevoEst = request.getParameter("nuevoEstado");
         try (Connection conn = getConn()) {
-            PreparedStatement ps = conn.prepareStatement("UPDATE propiedad SET estado=? WHERE id_propiedad=? AND id_usuario=?");
-            ps.setString(1, nuevoEst); ps.setInt(2, Integer.parseInt(idProp)); ps.setInt(3, (Integer) idUsrObj);
+            PreparedStatement ps = conn.prepareStatement("UPDATE propiedad SET estado=? WHERE id_propiedad=?");
+            ps.setString(1, nuevoEst); ps.setInt(2, Integer.parseInt(idProp));
             ps.executeUpdate();
             msgProp = "Estado actualizado a '" + nuevoEst + "'.";
         } catch (Exception ex) { msgProp = "Error: " + ex.getMessage(); }
@@ -26,11 +26,11 @@
     java.util.List<java.util.Map<String,String>> propiedades = new java.util.ArrayList<>();
     if (idUsrObj != null) {
         try (Connection conn = getConn()) {
-            String sql = "SELECT p.id_propiedad, p.titulo, p.precio, p.operacion, p.estado, " +
-                         "tp.nombre AS tipo, c.nombre AS ciudad, p.num_habitaciones, p.num_banos, p.area_m2 " +
+            String sql = "SELECT p.id_propiedad, p.titulo, p.precio, p.tipo_operacion AS operacion, p.estado, " +
+                         "tp.nombre AS tipo, c.nombre AS ciudad, p.habitaciones, p.banos, p.area_m2 " +
                          "FROM propiedad p JOIN tipo_propiedad tp ON tp.id_tipo=p.id_tipo " +
                          "JOIN ciudad c ON c.id_ciudad=p.id_ciudad " +
-                         "WHERE p.id_usuario=" + (Integer) idUsrObj + " ORDER BY p.fecha_publicacion DESC";
+                         "ORDER BY p.fecha_publicacion DESC";
             ResultSet rs = conn.createStatement().executeQuery(sql);
             while (rs.next()) {
                 java.util.Map<String,String> m = new java.util.LinkedHashMap<>();

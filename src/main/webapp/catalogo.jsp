@@ -34,13 +34,13 @@
 
         // Construir consulta dinámica
         StringBuilder sql = new StringBuilder(
-            "SELECT p.id_propiedad, p.titulo, p.precio, p.operacion, p.num_habitaciones, p.num_banos, p.area_m2, " +
+            "SELECT p.id_propiedad, p.titulo, p.precio, p.tipo_operacion AS operacion, p.habitaciones, p.banos, p.area_m2, " +
             "tp.nombre AS tipo, c.nombre AS ciudad, c.id_ciudad, " +
-            "(SELECT img.url FROM imagen_propiedad img WHERE img.id_propiedad = p.id_propiedad LIMIT 1) AS imagen " +
+            "(SELECT img.url FROM imagen_propiedad img WHERE img.id_propiedad = p.id_propiedad ORDER BY img.orden ASC LIMIT 1) AS imagen " +
             "FROM propiedad p " +
             "JOIN tipo_propiedad tp ON tp.id_tipo = p.id_tipo " +
             "JOIN ciudad c ON c.id_ciudad = p.id_ciudad " +
-            "WHERE p.estado = 'activo' ");
+            "WHERE p.estado = 'disponible' ");
         java.util.List<Object> params = new java.util.ArrayList<>();
 
         if (pCiudad != null && !pCiudad.isEmpty()) {
@@ -50,7 +50,7 @@
             sql.append("AND p.id_tipo = ? "); params.add(Integer.parseInt(pTipo));
         }
         if (pOper != null && !pOper.isEmpty()) {
-            sql.append("AND p.operacion = ? "); params.add(pOper);
+            sql.append("AND LOWER(p.tipo_operacion) = LOWER(?) "); params.add(pOper);
         }
         if (pPrecioMax != null && !pPrecioMax.isEmpty()) {
             sql.append("AND p.precio <= ? "); params.add(Long.parseLong(pPrecioMax));
@@ -59,7 +59,7 @@
             sql.append("AND p.precio >= ? "); params.add(Long.parseLong(pPrecioMin));
         }
         if (pHab != null && !pHab.isEmpty()) {
-            sql.append("AND p.num_habitaciones >= ? "); params.add(Integer.parseInt(pHab));
+            sql.append("AND p.habitaciones >= ? "); params.add(Integer.parseInt(pHab));
         }
         if ("precio_asc".equals(pOrden))  sql.append("ORDER BY p.precio ASC ");
         else if ("precio_desc".equals(pOrden)) sql.append("ORDER BY p.precio DESC ");
@@ -81,8 +81,8 @@
             m.put("operacion", rs.getString("operacion"));
             m.put("tipo",      rs.getString("tipo"));
             m.put("ciudad",    rs.getString("ciudad"));
-            m.put("hab",       rs.getString("num_habitaciones"));
-            m.put("ban",       rs.getString("num_banos"));
+            m.put("hab",       rs.getString("habitaciones"));
+            m.put("ban",       rs.getString("banos"));
             m.put("area",      rs.getString("area_m2"));
             m.put("imagen",    rs.getString("imagen"));
             propiedades.add(m);

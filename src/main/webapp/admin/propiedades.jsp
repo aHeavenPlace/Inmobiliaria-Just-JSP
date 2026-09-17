@@ -20,13 +20,13 @@
 
     java.util.List<java.util.Map<String,String>> propiedades = new java.util.ArrayList<>();
     try (Connection conn = getConn()) {
-        String sql = "SELECT p.id_propiedad, p.titulo, p.precio, p.operacion, p.estado, " +
+        String sql = "SELECT p.id_propiedad, p.titulo, p.precio, p.tipo_operacion AS operacion, p.estado, " +
                      "tp.nombre AS tipo, c.nombre AS ciudad, " +
-                     "COALESCE(per.nombres || ' ' || per.apellidos, 'Sin agente') AS agente " +
+                     "COALESCE(i.nombre, 'Vesta Inmobiliaria') AS agente " +
                      "FROM propiedad p " +
                      "JOIN tipo_propiedad tp ON tp.id_tipo = p.id_tipo " +
                      "JOIN ciudad c ON c.id_ciudad = p.id_ciudad " +
-                     "LEFT JOIN perfil per ON per.id_usuario = p.id_usuario " +
+                     "LEFT JOIN inmobiliaria i ON i.id_inmobiliaria = p.id_inmobiliaria " +
                      "ORDER BY p.fecha_publicacion DESC";
         ResultSet rs = conn.createStatement().executeQuery(sql);
         while (rs.next()) {
